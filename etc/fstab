@@ -1,0 +1,5 @@
+# Device		Mountpoint	FStype	Options		Dump	Pass#
+/dev/ada0p4.eli		none	swap	sw		0	0
+# nas nfs shares
+192.168.1.25:/volume1/Video /home/djwilcox/video nfs rw,noauto 0 0
+192.168.1.25:/volume1/music /home/djwilcox/music nfs rw,noauto 0 0
