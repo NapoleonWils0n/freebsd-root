@@ -1,3 +1,5 @@
+local-zone: "coinhive.com" redirect
+local-data: "coinhive.com A 127.0.0.1"
 local-zone: "facebook.com" redirect
 local-data: "facebook.com A 127.0.0.1"
 local-zone: "101com.com" redirect
