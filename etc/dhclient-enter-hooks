@@ -1,3 +1,0 @@
-add_new_resolv_conf() {
-  return 0
-}
