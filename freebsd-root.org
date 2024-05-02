@@ -658,7 +658,7 @@ kld_list="i915kms ext2fs fusefs"
 # wayland
 seatd_enable="YES"
 # dbus
-#dbus_enable="YES"
+dbus_enable="YES"
 # power settings
 powerd_flags="-a hiadaptive -b adaptive"
 performance_cx_lowest="Cmax"
