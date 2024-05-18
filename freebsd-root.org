@@ -1780,6 +1780,7 @@ permit nopass :djwilcox cmd umount
 permit nopass :djwilcox cmd service args netif start
 permit nopass :djwilcox cmd service args netif stop
 permit nopass :djwilcox cmd service args netif restart
+permit nopass :djwilcox cmd service
 
 # ifconfig wlan0
 permit nopass :djwilcox cmd ifconfig args wlan0 up
