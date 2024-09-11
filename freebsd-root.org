@@ -666,9 +666,9 @@ performance_cx_lowest="Cmax"
 economy_cx_lowest="Cmax"
 # pf firewall
 pf_enable="YES"
-dnscrypt_proxy_enable="YES"
-dnscrypt_proxy_pidfile="/var/run/dnscrypt-proxy.pid"
-dnscrypt_proxy_logfile="/var/log/dnscrypt-proxy.log"
+#dnscrypt_proxy_enable="YES"
+#dnscrypt_proxy_pidfile="/var/run/dnscrypt-proxy.pid"
+#dnscrypt_proxy_logfile="/var/log/dnscrypt-proxy.log"
 # devfs rules for user mounting drives
 devfs_system_ruleset="localrules"
 # ralink wifi - uncomment to enable wifi
