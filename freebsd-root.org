@@ -645,7 +645,6 @@ pass out quick on $int_if all modulate state
 clear_tmp_enable="YES"
 syslogd_flags="-ss"
 hostname="castor"
-ifconfig_bge0="DHCP"
 local_unbound_enable="YES"
 ntpd_enable="YES"
 ntpd_sync_on_start="YES"
