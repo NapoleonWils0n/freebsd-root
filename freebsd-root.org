@@ -47,6 +47,11 @@ coretemp_load="YES"
 wsp_load="YES"
 hint.p4tcc.0.disabled="1"
 hint.acpi_throttle.0.disabled="1"
+# broadcom wifi
+hw.bwn_pci.preferred="1"
+bwn_v4_ucode_load="YES"
+bwn_v4_n_ucode_load="YES"
+bwn_v4_lp_ucode_load="YES"
 # ralink wifi
 if_run_load="YES"
 runfw_load="YES"
@@ -672,14 +677,14 @@ pf_enable="YES"
 # devfs rules for user mounting drives
 devfs_system_ruleset="localrules"
 
-# laggo failover device
+# laggo failover device - bwn
 # ethernet mac address set to wifi mac address
-ifconfig_bge0="68:5b:35:b9:ef:7d"
-wlans_run0="wlan0"
-ifconfig_wlan0="WPA"
-create_args_wlan0="country GB"
+ifconfig_ue0="ether 04:0c:ce:d5:b0:ae"
 cloned_interfaces="lagg0"
-ifconfig_lagg0="up laggproto failover laggport bge0 laggport wlan0 DHCP"
+wlans_bwn0="wlan0"
+ifconfig_wlan0="WPA"
+create_args_wlan0="country US regdomain FCC"
+ifconfig_lagg0="up laggproto failover laggport ue0 laggport wlan0 DHCP"
 
 # ralink wifi - uncomment to enable wifi
 #wlans_run0="wlan0"
