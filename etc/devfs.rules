@@ -1,2 +1,4 @@
 [localrules=5]
 add path 'da*' mode 0660 group operator
+add path 'input/*' mode 0660 group video
+add path 'input/event*' mode 0660 group video

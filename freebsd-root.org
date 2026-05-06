@@ -1,7 +1,7 @@
-#+TITLE: freebsd root dotfiles mac
+#+TITLE: freebsd root dotfiles macbook air
 #+STARTUP: overview hideblocks
 #+OPTIONS: num:nil author:nil
-#+PROPERTY: header-args :mkdirp yes
+#+PROPERTY: header-args :mkdirp yes :noweb yes :tangle-mode o644
 * tangle dotfiles
 ** tangle document
 
@@ -32,6 +32,15 @@ emacs --batch -l org --eval '(org-babel-tangle-file "~/git/freebsd/freebsd-root/
 
 #+NAME: loader.conf
 #+BEGIN_SRC conf
+#===============================================================================
+# loader.conf
+#===============================================================================
+
+
+#===============================================================================
+# general settings
+#===============================================================================
+
 aesni_load="YES"
 geom_eli_load="YES"
 security.bsd.allow_destructive_dtrace=0
@@ -39,42 +48,96 @@ kern.geom.label.disk_ident.enable="0"
 kern.geom.label.gptid.enable="0"
 cryptodev_load="YES"
 zfs_load="YES"
+
+
+#===============================================================================
+# nullfs tmpfs for poudriere
+#===============================================================================
+
+nullfs_load="YES"
+
+
+#===============================================================================
+# audio
+#===============================================================================
+
 snd_hda_load="YES"
 snd_uaudio_load="YES"
-asmc_load="YES"
+
+
+#===============================================================================
+# coretemp
+#===============================================================================
+
 acpi_video_load="YES"
 coretemp_load="YES"
+
+
+#===============================================================================
+# touchpad
+#===============================================================================
+
 wsp_load="YES"
-hint.p4tcc.0.disabled="1"
-hint.acpi_throttle.0.disabled="1"
-# broadcom wifi
-hw.bwn_pci.preferred="1"
-bwn_v4_ucode_load="YES"
-bwn_v4_n_ucode_load="YES"
-bwn_v4_lp_ucode_load="YES"
-wlan_wep_load="YES"
-wlan_ccmp_load="YES"
-wlan_tkip_load="YES"
-# ralink wifi
-if_run_load="YES"
-runfw_load="YES"
-# poudriere
-nullfs_load="YES"
-tmpfs_load="YES"
-#asynchronous i/o
+
+
+#===============================================================================
+# async i/o
+#===============================================================================
+
 aio_load="YES"
+
+
+#===============================================================================
 # cuse audio for virtual_oss
+#===============================================================================
+
 cuse_load="YES"
+
+
+#===============================================================================
 # virtual oss - start with: sudo sysrc onestart virtual_oss 
+#===============================================================================
+
 virtual_oss_enable="NO"
+
+
+#===============================================================================
 # mixertui
+#===============================================================================
+
 sysctlinfo_load="YES"
 sysctlbyname_improved_load="YES"
+
+
+#===============================================================================
 # usb keyboard multimedia keys
+#===============================================================================
+
 usbhid_load="YES"
+
+
+#===============================================================================
 # setfibs
+#===============================================================================
+
 net.fibs=2
-#net.add_addr_allfibs=0
+
+
+#===============================================================================
+# macbook air settings
+#===============================================================================
+
+asmc_load="YES"
+hint.p4tcc.0.disabled="1"
+hint.acpi_throttle.0.disabled="1"
+
+
+#===============================================================================
+# ralink wifi
+#===============================================================================
+
+if_run_load="YES"
+runfw_load="YES"
 #+END_SRC
 
 **** loader.conf tangle
@@ -82,14 +145,14 @@ net.fibs=2
 :ORDERED:  t
 :END:
 
-+ root dir
+***** root dir
 
 #+NAME: loader.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/boot/loader.conf"
+#+BEGIN_SRC conf :tangle "/doas::/boot/loader.conf"
 <<loader.conf>>
 #+END_SRC
   
-+ current dir
+***** current dir
 
 #+NAME: loader.conf-current-dir
 #+BEGIN_SRC conf :noweb yes :tangle "boot/loader.conf"
@@ -109,6 +172,8 @@ net.fibs=2
 #+BEGIN_SRC conf
 [localrules=5]
 add path 'da*' mode 0660 group operator
+add path 'input/*' mode 0660 group video
+add path 'input/event*' mode 0660 group video
 #+END_SRC
 
 **** devfs.rules tangle
@@ -116,18 +181,52 @@ add path 'da*' mode 0660 group operator
 :ORDERED:  t
 :END:
 
-+ root dir
+***** root dir
 
 #+NAME: devfs.rules-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/devfs.rules"
+#+BEGIN_SRC conf :tangle "/doas::/etc/devfs.rules"
 <<devfs.rules>>
 #+END_SRC
-  
-+ current dir
+ 
+***** current dir
 
 #+NAME: devfs.rules-current-dir
 #+BEGIN_SRC conf :noweb yes :tangle "etc/devfs.rules"
 <<devfs.rules>>
+#+END_SRC
+
+*** dhclient-enter-hooks
+
+#+begin_example
+/etc/dhclient-enter-hooks
+#+end_example
+
+**** dhclient-enter-hooks config
+
+#+NAME: dhclient-enter-hooks
+#+BEGIN_SRC conf
+add_new_resolv_conf() {
+  return 0
+}
+#+END_SRC
+
+**** dhclient-enter-hooks tangle
+:PROPERTIES:
+:ORDERED:  t
+:END:
+
++ root dir
+
+#+NAME: dhclient-enter-hooks-root-dir
+#+BEGIN_SRC conf :tangle "/doas::/etc/dhclient-enter-hooks"
+<<dhclient-enter-hooks>>
+#+END_SRC
+  
++ current dir
+
+#+NAME: dhclient-enter-hooks-current-dir
+#+BEGIN_SRC conf :tangle "etc/dhclient-enter-hooks"
+<<dhclient-enter-hooks>>
 #+END_SRC
 
 *** fstab
@@ -140,13 +239,23 @@ add path 'da*' mode 0660 group operator
 
 #+NAME: fstab
 #+BEGIN_SRC conf
+#===============================================================================
+# fstab
+#===============================================================================
+
+#===============================================================================
 # Device		Mountpoint	FStype	Options		Dump	Pass#
+#===============================================================================
+
 /dev/gpt/efiboot0		/boot/efi	msdosfs	rw		2	2
 /dev/ada0p3.eli		none	swap	sw		0	0
-proc                            /proc           procfs  rw      0       0
+
+
+#===============================================================================
 # linux
-linprocfs                       /compat/linux/proc	linprocfs	rw	0	0
-linsysfs                        /compat/linux/sys	linsysfs	rw	0	0
+#===============================================================================
+
+proc            /proc                   procfs          rw      0       0
 #+END_SRC
 
 **** fstab tangle
@@ -154,18 +263,70 @@ linsysfs                        /compat/linux/sys	linsysfs	rw	0	0
 :ORDERED:  t
 :END:
 
-+ root dir
+***** root dir
 
 #+NAME: fstab-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/fstab"
+#+BEGIN_SRC conf :tangle "/doas::/etc/fstab"
 <<fstab>>
 #+END_SRC
   
-+ current dir
+***** current dir
 
 #+NAME: fstab-current-dir
 #+BEGIN_SRC conf :noweb yes :tangle "etc/fstab"
 <<fstab>>
+#+END_SRC
+
+*** jail.conf
+
+#+begin_example
+/etc/jail.conf
+#+end_example
+
+**** jail.conf config
+
+#+NAME: jail
+#+BEGIN_SRC conf
+#===============================================================================
+# jail.conf
+#===============================================================================
+
+
+#===============================================================================
+# startup/logging
+#===============================================================================
+
+exec.start = "/bin/sh /etc/rc";
+exec.stop = "/bin/sh /etc/rc.shutdown";
+exec.consolelog = "/var/log/jail_console_${name}.log";
+
+
+#===============================================================================
+# permissions
+#===============================================================================
+
+allow.raw_sockets;
+exec.clean;
+mount.devfs;
+#+END_SRC
+
+**** jail.conf tangle
+:PROPERTIES:
+:ORDERED:  t
+:END:
+
+***** root dir
+
+#+NAME: jail-root-dir
+#+BEGIN_SRC conf :tangle "/doas::/etc/jail.conf"
+<<jail>>
+#+END_SRC
+  
+***** current dir
+
+#+NAME: jail-current-dir
+#+BEGIN_SRC conf :tangle "etc/jail.conf"
+<<jail>>
 #+END_SRC
 
 *** login.conf
@@ -516,14 +677,14 @@ russian|Russian Users Accounts:\
 :ORDERED:  t
 :END:
 
-+ root dir
+***** root dir
 
 #+NAME: login-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/login.conf"
+#+BEGIN_SRC conf :tangle "/doas::/etc/login.conf"
 <<login>>
 #+END_SRC
   
-+ current dir
+***** current dir
 
 #+NAME: login-current-dir
 #+BEGIN_SRC conf :noweb yes :tangle "etc/login.conf"
@@ -545,15 +706,12 @@ russian|Russian Users Accounts:\
 #=========================================================================#
 
 int_if="lagg0" # lagg0 failover
-#int_if="ue0" # usb to ethernet adaptor
-#int_if="bge0" # thunderbolt to ethernet adaptor
-#int_if="wlan0" # ralink usb wifi
 vpn_if="tun0" # vpn interface
 all_networks="0.0.0.0/0"
 vpn_network="$vpn_if:network"
-# 6881, 6882 = transmission. 22000, 21025 = syncthing
+# 6881, 6882 = transmission. , 22000, 22000, 21027 = syncthing
 tcp_services = "{ ntp, 6881, 22000 }" # tcp services - torrent
-udp_services = "{ ntp, 6882, 21025 }" # udp services - torrent
+udp_services = "{ ntp, 6882, 21025, 21027 }" # udp services - torrent
 icmp_types = "{ echoreq, unreach }"
 tcp_state="flags S/SA keep state"
 udp_state="keep state"
@@ -585,19 +743,14 @@ block log all # block log all
 block return out quick inet6 all tag IPV6 # block ipv6 
 block in quick inet6 all tag IPV6 # block ipv6
 
-# block broken networks - turned off for synergy
-# block in quick from { <martians> no-route urpf-failed } to any tag BAD_PACKET
 
 #=========================================================================#
 # anchors                                                                 #
 #=========================================================================#
 
-# emerging threats - anchor
-#anchor "emerging-threats"
-#load anchor "emerging-threats" from "/etc/pf.anchors/emerging-threats"
-
 # openvpn - anchor
 anchor "openvpn"
+
 
 #=========================================================================#
 # traffic tag                                                             #
@@ -613,8 +766,6 @@ pass in on $int_if inet proto udp from any to ($int_if) port $udp_services $udp_
 # outbound traffic
 block out on $int_if all
 pass out quick on $int_if all modulate state
-#pass out quick on $int_if from <myself> to <lan> modulate state tag LAN_OUT
-#pass out quick on $int_if from <myself> to <internet> modulate state tag INTERNET_OUT
 #+END_SRC
 
 **** pf.conf tangle
@@ -622,14 +773,14 @@ pass out quick on $int_if all modulate state
 :ORDERED:  t
 :END:
 
-+ root dir
+***** root dir
 
 #+NAME: pf.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/pf.conf"
+#+BEGIN_SRC conf :tangle "/doas::/etc/pf.conf"
 <<pf.conf>>
 #+END_SRC
   
-+ current dir
+***** current dir
 
 #+NAME: pf.conf-current-dir
 #+BEGIN_SRC conf :noweb yes :tangle "etc/pf.conf"
@@ -646,63 +797,180 @@ pass out quick on $int_if all modulate state
 
 #+NAME: rc.conf
 #+BEGIN_SRC conf
+#=========================================================================#
+# rc.conf
+#=========================================================================#
+
+
+#=========================================================================#
+# general settings
+#=========================================================================#
+
+zfs_enable="YES"
 clear_tmp_enable="YES"
 syslogd_flags="-ss"
 hostname="castor"
-local_unbound_enable="YES"
+local_unbound_enable="NO"
+sshd_enable="NO"
+moused_enable="NO"
+
+
+#=========================================================================#
+# Set dumpdev to "AUTO" to enable crash dumps, "NO" to disable
+#=========================================================================#
+
+dumpdev="NO"
+
+
+#=========================================================================#
+# pf firewall
+#=========================================================================#
+
+pf_enable="YES"
+
+
+#=========================================================================#
+# time and date
+#=========================================================================#
+
 ntpd_enable="YES"
 ntpd_sync_on_start="YES"
-powerd_enable="YES"
-#moused_nondefault_enable="NO"
-moused_enable="NO"
-# Set dumpdev to "AUTO" to enable crash dumps, "NO" to disable
-dumpdev="AUTO"
-zfs_enable="YES"
-# kld list 
-kld_list="linux linux64 i915kms ext2fs fusefs"
-# wayland
-seatd_enable="YES"
-# dbus
-dbus_enable="YES"
+
+
+#=========================================================================#
 # power settings
+#=========================================================================#
+
+powerd_enable="YES"
 powerd_flags="-a hiadaptive -b adaptive"
 performance_cx_lowest="Cmax"
 economy_cx_lowest="Cmax"
-# pf firewall
-pf_enable="YES"
-#dnscrypt_proxy_enable="YES"
-#dnscrypt_proxy_pidfile="/var/run/dnscrypt-proxy.pid"
-#dnscrypt_proxy_logfile="/var/log/dnscrypt-proxy.log"
-# devfs rules for user mounting drives
-devfs_system_ruleset="localrules"
 
-# laggo failover device - bwn
-# ethernet mac address set to wifi mac address
-ifconfig_ue0="ether 04:0c:ce:d5:b0:ae"
-cloned_interfaces="lagg0"
-wlans_bwn0="wlan0"
-ifconfig_wlan0="WPA"
-create_args_wlan0="country US regdomain FCC"
-ifconfig_lagg0="up laggproto failover laggport ue0 laggport wlan0 DHCP"
 
-# laggpf netif restart lagg0, and restart pf
-# needed for usb exthernet and wifi
-laggpf_enable="YES"
+#=========================================================================#
+# kld list 
+#=========================================================================#
 
-# ralink wifi - uncomment to enable wifi
-#wlans_run0="wlan0"
-#ifconfig_wlan0="WPA SYNDHCP"
+kld_list="linux linux64 i915kms ext2fs mac_priority fusefs"
+
+
+#=========================================================================#
+# wayland
+#=========================================================================#
+
+seatd_enable="YES"
+
+
+#=========================================================================#
+# dbus
+#=========================================================================#
+
+dbus_enable="YES"
+
+
+#=========================================================================#
 # linux
+#=========================================================================#
+
 linux_enable="YES"
+
+
+#=========================================================================#
 # virtual oss
+#=========================================================================#
+
 virtual_oss_enable="YES"
 virtual_oss_configs="dsp"
-virtual_oss_dsp="-S -Q 0 -C 2 -c 2 -r 48000 -b 16 -s 1024 -P /dev/dsp0 -R /dev/null -w vdsp.wav -l dsp -t vdsp.ctl"
+virtual_oss_dsp="-T /dev/sndstat -S -Q 0 -C 2 -c 2 -r 48000 -b 16 -s 1024 -P /dev/dsp1 -R /dev/null -w vdsp.wav -l dsp -t vdsp.ctl"
+
+
+#=========================================================================#
 # sndiod audio
+#=========================================================================#
+
 sndiod_enable="YES"
+
+
+#=========================================================================#
+# jack
+#=========================================================================#
+
+jackd_enable="NO"
+jackd_user="djwilcox"
+jackd_rtprio="YES"
+
+
+#=========================================================================#
 # musicpd
+#=========================================================================#
+
 musicpd_enable="YES"
+
+
+#=========================================================================#
+# devfs rules for user mounting drives
+#=========================================================================#
+
+devfs_system_ruleset="localrules"
+
+
+#=========================================================================#
+# laggo failover device
+# ethernet mac address set to wifi mac address
+#=========================================================================#
+
+ifconfig_ue0="ether 78:2b:46:ee:27:a3"
+wlans_iwlwifi0="wlan0"
+ifconfig_wlan0="WPA"
+create_args_wlan0="country GB"
+cloned_interfaces="lagg0 lo1"
+
+
+#=========================================================================#
+#cloned_interfaces="lagg0 lo1 bridge0 tap0"
+#ifconfig_bridge0="up addm lagg0 addm tap0"
+#=========================================================================#
+
+ifconfig_lagg0="up laggproto failover laggport ue0 laggport wlan0 DHCP"
+
+
+#=========================================================================#
+# laggpf netif restart lagg0, and restart pf
+# needed for usb exthernet and wifi
+#=========================================================================#
+
+laggpf_enable="YES"
+
+
+#=========================================================================#
+# unbound
+#=========================================================================#
+
+unbound_enable="YES"
+unbound_anchor_enable="YES"
+
+
+#=========================================================================#
+# dnscrypt_proxy
+#=========================================================================#
+
+dnscrypt_proxy_enable="YES"
+dnscrypt_proxy_pidfile="/var/run/dnscrypt-proxy.pid"
+dnscrypt_proxy_logfile="/var/log/dnscrypt-proxy.log"
+
+
+#=========================================================================#
+# jail enable
+#=========================================================================#
+
+jail_enable="YES"
+ifconfig_lo1_aliases="inet 10.10.0.1-12/24"
+
+
+#=========================================================================#
 # syncthing
+#=========================================================================#
+
 syncthing_enable="NO"
 syncthing_user="djwilcox"
 syncthing_group="djwilcox"
@@ -713,14 +981,14 @@ syncthing_group="djwilcox"
 :ORDERED:  t
 :END:
 
-+ root dir
+***** root dir
 
 #+NAME: rc.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/rc.conf"
+#+BEGIN_SRC conf :tangle "/doas::/etc/rc.conf"
 <<rc.conf>>
 #+END_SRC
   
-+ current dir
+***** current dir
 
 #+NAME: rc.conf-current-dir
 #+BEGIN_SRC conf :noweb yes :tangle "etc/rc.conf"
@@ -737,7 +1005,15 @@ syncthing_group="djwilcox"
 
 #+NAME: resolv.conf
 #+BEGIN_SRC conf
+#=========================================================================#
+# resolv.conf
+#=========================================================================#
+
+
+#=========================================================================#
 # Generated by resolvconf
+#=========================================================================#
+
 search localdomain
 # nameserver 192.168.1.1
 
@@ -750,14 +1026,14 @@ options edns0
 :ORDERED:  t
 :END:
 
-+ root dir
+***** root dir
 
 #+NAME: resolv.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/resolv.conf"
+#+BEGIN_SRC conf :tangle "/doas::/etc/resolv.conf"
 <<resolv.conf>>
 #+END_SRC
   
-+ current dir
+***** current dir
 
 #+NAME: resolv.conf-current-dir
 #+BEGIN_SRC conf :noweb yes :tangle "etc/resolv.conf"
@@ -774,48 +1050,128 @@ options edns0
 
 #+NAME: sysctl.conf
 #+BEGIN_SRC conf
+#=========================================================================#
+# sysctl.conf
+#=========================================================================#
 #
 #  This file is read when going to multi-user and its contents piped thru
 #  ``sysctl'' to adjust kernel values.  ``man 5 sysctl.conf'' for details.
 #
+#=========================================================================#
 
-# Uncomment this to prevent users from seeing information about processes that
-# are being run under another UID.
-#security.bsd.see_other_uids=0
+
+#=========================================================================#
+# Uncomment this to prevent users from seeing information about processes
+# that are being run under another UID.
+#=========================================================================#
+
+
+security.bsd.see_other_uids=0
 security.bsd.see_other_uids=0
 security.bsd.see_other_gids=0
 security.bsd.see_jail_proc=0
 security.bsd.unprivileged_read_msgbuf=0
 security.bsd.unprivileged_proc_debug=0
 kern.randompid=1
-vfs.zfs.min_auto_ashift=12
+kern.coredump=0
+
+
+#=========================================================================#
+# chroot
+#=========================================================================#
+
+security.bsd.unprivileged_chroot=1
+kern.randompid=1
+vfs.zfs.vdev.min_auto_ashift=12
+
+
+#=========================================================================#
+# disable bell
+#=========================================================================#
+
 hw.syscons.bell=0
-# laptop speakers
+
+
+#=========================================================================#
+# user mount drives
+#=========================================================================#
+
+vfs.usermount=1
+
+
+#=========================================================================#
+# default audio output - speakers
+#=========================================================================#
+
 hw.snd.default_unit=0
+
+
+#=========================================================================#
 # use new audio devices automatically
+#=========================================================================#
+
 hw.snd.default_auto=1
+
+
+#=========================================================================#
 # dont autoreset vol to default
+#=========================================================================#
+
 hw.snd.vpc_autoreset=0
+
+
+#=========================================================================#
 # audio tweaks
+#=========================================================================#
+
 hw.snd.latency=0
 kern.timecounter.alloweddeviation=0
 hw.usb.uaudio.buffer_ms=2
-# sleep resume
-hw.acpi.lid_switch_state=s3
-# user mount
-vfs.usermount=1
+
+
+#=========================================================================#
 # chromium
+#=========================================================================#
+
 kern.ipc.shm_allow_removed=1
+
+
+#=========================================================================#
 # change reponsiveness from server to desktop
+#=========================================================================#
+
 kern.sched.preempt_thresh=224
+
+
+#=========================================================================#
 # screen brightness
-#hw.acpi.video.lcd0.economy=50
+#=========================================================================#
+
+hw.acpi.video.lcd0.economy=50
 hw.acpi.video.lcd0.fullpower=100
 hw.acpi.video.lcd0.brightness=100
+
+
+#=========================================================================#
 # usb keyboard media keys
+#=========================================================================#
+
 hw.usb.usbhid.enable=1
-# fibs
+
+
+#=========================================================================#
+# fib
+#=========================================================================#
+
 net.add_addr_allfibs=0
+
+
+#=========================================================================#
+# sleep resume
+#=========================================================================#
+
+hw.acpi.lid_switch_state=s3
+
 #+END_SRC
 
 **** sysctl.conf tangle
@@ -823,14 +1179,14 @@ net.add_addr_allfibs=0
 :ORDERED:  t
 :END:
 
-+ root dir
+***** root dir
 
 #+NAME: sysctl.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/sysctl.conf"
+#+BEGIN_SRC conf :tangle "/doas::/etc/sysctl.conf"
 <<sysctl.conf>>
 #+END_SRC
   
-+ current dir
+***** current dir
 
 #+NAME: sysctl.conf-current-dir
 #+BEGIN_SRC conf :noweb yes :tangle "etc/sysctl.conf"
@@ -906,137 +1262,18 @@ rcons	"/usr/libexec/getty std.115200"	vt100	onifconsole insecure
 :ORDERED:  t
 :END:
 
-+ root dir
+***** root dir
 
 #+NAME: ttys-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/ttys"
+#+BEGIN_SRC conf :tangle "/doas::/etc/ttys"
 <<ttys>>
 #+END_SRC
   
-+ current dir
+***** current dir
 
 #+NAME: ttys-current-dir
 #+BEGIN_SRC conf :noweb yes :tangle "etc/ttys"
 <<ttys>>
-#+END_SRC
-
-*** unbound
-**** conf.d
-***** custom.conf
-
-#+begin_example
-/etc/unbound/conf.d/custom.conf
-#+end_example
-
-****** custom.conf config
-
-#+NAME: custom.conf
-#+BEGIN_SRC conf
-server:
-# include: "/etc/unbound/unbound_outgoing_interface"
-	verbosity: 1
-	access-control: 0.0.0.0/0 refuse
-	access-control: 127.0.0.0/8 allow
-	access-control: ::0/0 refuse
-	access-control: ::1 allow
-	access-control: ::ffff:127.0.0.1 allow
-	
-	# enable to not answer id.server and hostname.bind queries.
-	hide-identity: yes
-	hide-version: yes
-	harden-glue: yes
-	harden-dnssec-stripped: yes
-	
-        # dont query localhost needed for dnscrypt-proxy
-        do-not-query-localhost: no
-# remote-control:
-#	control-enable: no
-#+END_SRC
-
-****** custom.conf tangle
-:PROPERTIES:
-:ORDERED:  t
-:END:
-
-+ root dir
-
-#+NAME: custom.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/unbound/conf.d/custom.conf"
-<<custom.conf>>
-#+END_SRC
-  
-+ current dir
-
-#+NAME: custom.conf-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "etc/unbound/conf.d/custom.conf"
-<<custom.conf>>
-#+END_SRC
-
-**** forward.conf
-
-#+begin_example
-/etc/unbound/forward.conf
-#+end_example
-
-***** forward.conf config
-
-#+NAME: forward.conf
-#+BEGIN_SRC conf
-# Generated by resolvconf
-
-forward-zone:
-	name: "."
-	forward-addr: 127.0.0.1@5353
-#+END_SRC
-
-***** forward.conf tangle
-:PROPERTIES:
-:ORDERED:  t
-:END:
-
-+ root dir
-
-#+NAME: forward.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/unbound/forward.conf"
-<<forward.conf>>
-#+END_SRC
-  
-+ current dir
-
-#+NAME: forward.conf-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "etc/unbound/forward.conf"
-<<forward.conf>>
-#+END_SRC
-
-**** unbound_outgoing_interface
-
-#+begin_example
-/etc/unbound/unbound_outgoing_interface
-#+end_example
-
-***** unbound_outgoing_interface config
-
-#+NAME: unbound_outgoing_interface
-#+BEGIN_SRC conf
-#+END_SRC
-
-***** unbound_outgoing_interface tangle
-:PROPERTIES:
-:ORDERED:  t
-:END:
-
-+ root dir
-
-#+NAME: unbound_outgoing_interface-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/etc/unbound/unbound_outgoing_interface"
-<<unbound_outgoing_interface>>
-#+END_SRC
-  
-+ current dir
-
-#+NAME: unbound_outgoing_interface-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "etc/unbound/unbound_outgoing_interface"
-<<unbound_outgoing_interface>>
 #+END_SRC
 
 ** /usr/local/etc
@@ -1050,7 +1287,7 @@ forward-zone:
 ***** laggpf config
 
 #+NAME: laggpf
-#+BEGIN_SRC sh
+#+BEGIN_SRC sh :tangle-mode (identity #o755)
 #!/bin/sh
 
 # PROVIDE: laggpf
@@ -1087,14 +1324,14 @@ run_rc_command "$1"
 + root dir
 
 #+NAME: laggpf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/usr/local/etc/rc.d/laggpf" :tangle-mode (identity #o755)
+#+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/rc.d/laggpf" :tangle-mode (identity #o755)
 <<laggpf>>
 #+END_SRC
   
 + current dir
 
 #+NAME: laggpf-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "usr/local/etc/rc.d/laggpf"
+#+BEGIN_SRC conf :tangle "usr/local/etc/rc.d/laggpf" :tangle-mode (identity #o755)
 <<laggpf>>
 #+END_SRC
 
@@ -1107,7 +1344,7 @@ run_rc_command "$1"
 ***** musicpd config
 
 #+NAME: musicpd
-#+BEGIN_SRC sh
+#+BEGIN_SRC sh :tangle-mode (identity #o755)
 #!/bin/sh
 
 # PROVIDE: musicpd
@@ -1154,14 +1391,14 @@ run_rc_command $1
 + root dir
 
 #+NAME: musicpd-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/usr/local/etc/rc.d/musicpd" :tangle-mode (identity #o755)
+#+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/rc.d/musicpd" :tangle-mode (identity #o755)
 <<musicpd>>
 #+END_SRC
   
 + current dir
 
 #+NAME: musicpd-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "usr/local/etc/rc.d/musicpd"
+#+BEGIN_SRC conf :tangle "usr/local/etc/rc.d/musicpd" :tangle-mode (identity #o755)
 <<musicpd>>
 #+END_SRC
 
@@ -1189,7 +1426,7 @@ Consumer:Mute			1 0 mixer vol 0
 + root dir
 
 #+NAME: usbhidaction.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/usr/local/etc/usbhidaction.conf"
+#+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/usbhidaction.conf"
 <<usbhidaction.conf>>
 #+END_SRC
   
@@ -1211,20 +1448,32 @@ Consumer:Mute			1 0 mixer vol 0
 
 #+NAME: devd.conf
 #+BEGIN_SRC conf
-# ducky one 2 mini
-attach 100 {
-        device-name "uhid[0-9]+";                                                           
-        match "vendor"  "0x0416"; # (1)
-        match "product" "0x0123"; # (2)
+#=========================================================================#
+# devd.conf
+#=========================================================================#
 
-	#
-	# Do not add -d flag ! if you do it devd will never detach to background
-	# because usbhidaction will run in foreground !
-	#
-	# Remember you can add arguments after /etc/usbhidaction.conf like
-	# action "/usr/bin/usbhidaction -f $device-name -c /etc/usbhidaction.conf /dev/mixer1 2"
-	#
-        action "/usr/bin/usbhidaction -f $device-name -c /usr/local/etc/usbhidaction.conf";
+
+#=========================================================================#
+# Handle the Alfa Card being plugged in
+#=========================================================================#
+
+notify 100 {
+    match "system"      "IFNET";
+    match "subsystem"   "wlan0";  # Use your wlan interface name
+    match "type"        "ATTACH";
+    action "ifconfig lagg0 laggport wlan0";
+};
+
+
+#=========================================================================#
+# Clean up if the Alfa Card is unplugged
+#=========================================================================#
+
+notify 100 {
+    match "system"      "IFNET";
+    match "subsystem"   "wlan0";
+    match "type"        "DETACH";
+    action "ifconfig lagg0 -laggport wlan0";
 };
 #+END_SRC
 
@@ -1233,18 +1482,116 @@ attach 100 {
 :ORDERED:  t
 :END:
 
-+ root dir
+****** root dir
 
 #+NAME: devd.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/usr/local/etc/devd/devd.conf"
+#+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/devd/devd.conf"
 <<devd.conf>>
 #+END_SRC
   
-+ current dir
+****** current dir
 
 #+NAME: devd.conf-current-dir
 #+BEGIN_SRC conf :noweb yes :tangle "usr/local/etc/devd/devd.conf"
 <<devd.conf>>
+#+END_SRC
+
+*** unbound
+**** unbound.conf
+
+#+begin_example
+/usr/local/etc/unbound/unbound.conf
+#+end_example
+
+***** unbound.conf config
+
+#+NAME: unbound.conf
+#+BEGIN_SRC conf
+#=========================================================================#
+# unbound custom.conf
+#=========================================================================#
+
+server:
+	verbosity: 1
+	access-control: 0.0.0.0/0 refuse
+	access-control: 127.0.0.0/8 allow
+	access-control: ::0/0 refuse
+	access-control: ::1 allow
+	access-control: ::ffff:127.0.0.1 allow
+	
+	# enable to not answer id.server and hostname.bind queries.
+	hide-identity: yes
+	hide-version: yes
+	harden-glue: yes
+	harden-dnssec-stripped: yes
+
+        # Ensure it's pointing to your updated anchor
+        auto-trust-anchor-file: "/usr/local/etc/unbound/root.key"
+        # dont query localhost needed for dnscrypt-proxy
+        do-not-query-localhost: no
+
+include: "/usr/local/etc/unbound/forward.conf"
+#+END_SRC
+
+***** unbound.conf tangle
+:PROPERTIES:
+:ORDERED:  t
+:END:
+
+****** root dir
+
+#+NAME: unbound.conf-root-dir
+#+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/unbound/unbound.conf"
+<<unbound.conf>>
+#+END_SRC
+  
+****** current dir
+
+#+NAME: unbound.conf-current-dir
+#+BEGIN_SRC conf :tangle "usr/local/etc/unbound/unbound.conf"
+<<unbound.conf>>
+#+END_SRC
+
+**** forward.conf
+
+#+begin_example
+/usr/local/etc/unbound/forward.conf
+#+end_example
+
+***** forward.conf config
+
+#+NAME: forward.conf
+#+BEGIN_SRC conf
+#=========================================================================#
+# unbound forward.conf
+#=========================================================================#
+
+#=========================================================================#
+# Generated by resolvconf
+#=========================================================================#
+
+forward-zone:
+	name: "."
+	forward-addr: 127.0.0.1@5353
+#+END_SRC
+
+***** forward.conf tangle
+:PROPERTIES:
+:ORDERED:  t
+:END:
+
+****** root dir
+
+#+NAME: forward.conf-root-dir
+#+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/unbound/forward.conf"
+<<forward.conf>>
+#+END_SRC
+  
+****** current dir
+
+#+NAME: forward.conf-current-dir
+#+BEGIN_SRC conf :tangle "usr/local/etc/unbound/forward.conf"
+<<forward.conf>>
 #+END_SRC
 
 *** dnscrypt-proxy
@@ -1270,28 +1617,33 @@ attach 100 {
 ## Online documentation is available here: https://dnscrypt.info/doc
 
 
-
-##################################
-#         Global settings        #
-##################################
+###############################################################################
+#                             Global settings                                  #
+###############################################################################
 
 ## List of servers to use
 ##
 ## Servers from the "public-resolvers" source (see down below) can
 ## be viewed here: https://dnscrypt.info/public-servers
 ##
-## If this line is commented, all registered servers matching the require_* filters
-## will be used.
+## The proxy will automatically pick working servers from this list.
+## Note that the require_* filters do NOT apply when using this setting.
 ##
-## The proxy will automatically pick the fastest, working servers from the list.
+## By default, this list is empty and all registered servers matching the
+## require_* filters will be used instead.
+##
 ## Remove the leading # first to enable this; lines starting with # are ignored.
 
 # server_names = ['scaleway-fr', 'google', 'yandex', 'cloudflare']
-server_names = ['google']
-
+#server_names = ['quad9-dnscrypt-ip4-filter-pri', 'google', 'cloudflare']
+server_names = ['quad9-dnscrypt-ip4-filter-pri']
 
 ## List of local addresses and ports to listen to. Can be IPv4 and/or IPv6.
-## Note: When using systemd socket activation, choose an empty set (i.e. [] ).
+## Example with both IPv4 and IPv6:
+## listen_addresses = ['127.0.0.1:5353']
+##
+## To listen to all IPv4 addresses, use `listen_addresses = ['0.0.0.0:53']`
+## To listen to all IPv4+IPv6 addresses, use `listen_addresses = ['[::]:53']`
 
 listen_addresses = ['127.0.0.1:5353']
 
@@ -1309,7 +1661,11 @@ max_clients = 250
 # user_name = 'nobody'
 
 
-## Require servers (from static + remote sources) to satisfy specific properties
+###############################################################################
+#                            Server Selection                                  #
+###############################################################################
+
+## Require servers (from remote sources) to satisfy specific properties
 
 # Use servers reachable over IPv4
 ipv4_servers = true
@@ -1318,25 +1674,33 @@ ipv4_servers = true
 ipv6_servers = false
 
 # Use servers implementing the DNSCrypt protocol
-#dnscrypt_servers = true
-dnscrypt_servers = false
+dnscrypt_servers = true
 
 # Use servers implementing the DNS-over-HTTPS protocol
 doh_servers = true
+
+# Use servers implementing the Oblivious DoH protocol
+odoh_servers = false
 
 
 ## Require servers defined by remote sources to satisfy specific properties
 
 # Server must support DNS security extensions (DNSSEC)
-#require_dnssec = false
-require_dnssec = true
+require_dnssec = false
 
 # Server must not log user queries (declarative)
-require_nolog = true
+require_nolog = false
 
-# Server must not enforce its own blacklist (for parental control, ads blocking...)
-require_nofilter = true
+# Server must not enforce its own blocklist (for parental control, ads blocking...)
+require_nofilter = false
 
+# Server names to avoid even if they match all criteria
+disabled_server_names = []
+
+
+###############################################################################
+#                           Connection Settings                                #
+###############################################################################
 
 ## Always use TCP to connect to upstream servers.
 ## This can be useful if you need to route everything through Tor.
@@ -1347,42 +1711,137 @@ require_nofilter = true
 force_tcp = false
 
 
+## Enable support for HTTP/3 (HTTP over QUIC)
+## Note that, like DNSCrypt but unlike other HTTP versions, this uses
+## UDP and (usually) port 443 instead of TCP.
+
+http3 = false
+
+## When http3 is true, always try HTTP/3 first for DoH servers.
+## If the HTTP/3 connection fails, fallback to HTTP/2 and don't try
+## HTTP/3 again for that server. By default, HTTP/3 is only used for
+## servers that advertise support via the Alt-Svc header.
+##
+## WARNING: This setting is disabled by default because it will make
+## connections significantly slower for servers that don't support HTTP/3.
+## This is primarily a workaround for server operators who haven't
+## configured their servers to send proper Alt-Svc headers. The better
+## solution is to reach out to these operators and encourage them to
+## fix their servers to correctly advertise HTTP/3 support.
+
+http3_probe = false
+
+
 ## SOCKS proxy
 ## Uncomment the following line to route all TCP connections to a local Tor node
-## Tor doesn't support UDP, so set `force_tcp` to `true` as well.
+## Tor doesn't support UDP, so set `force_tcp` to `true` as well. When passing
+## a random username and password to Tor's socks5 connection, dnscrypt-proxy gets
+## an isolated circuit so it will not share an exit node with other applications.
+## Note: the random username and password used by dnscrypt-proxy should not
+## actually be defined in Tor's configuration.
 
-# proxy = "socks5://127.0.0.1:9050"
+# proxy = 'socks5://dnscrypt:dnscrypt@127.0.0.1:9050'
 
 
 ## HTTP/HTTPS proxy
 ## Only for DoH servers
 
-# http_proxy = "http://127.0.0.1:8888"
+# http_proxy = 'http://127.0.0.1:8888'
 
 
-## How long a DNS query will wait for a response, in milliseconds
+## How long a DNS query will wait for a response, in milliseconds.
+## If you have a network with *a lot* of latency, you may need to
+## increase this. Startup may be slower if you do so.
+## Don't increase it too much. 10000 is the highest reasonable value.
+## A timeout below 5000 is not recommended.
 
-timeout = 2500
+timeout = 5000
 
 
-## Keepalive for HTTP (HTTPS, HTTP/2) queries, in seconds
+## Keepalive for HTTP (HTTPS, HTTP/2, HTTP/3) queries, in seconds
 
 keepalive = 30
 
 
-## Load-balancing strategy: 'p2' (default), 'ph', 'fastest' or 'random'
+## Add EDNS-client-subnet information to outgoing queries
+##
+## Multiple networks can be listed; they will be randomly chosen.
+## These networks don't have to match your actual networks.
 
-# lb_strategy = 'p2'
+# edns_client_subnet = ['0.0.0.0/0', '2001:db8::/32']
 
+
+## Response for blocked queries. Options are `refused`, `hinfo` (default) or
+## an IP response. To give an IP response, use the format `a:<IPv4>,aaaa:<IPv6>`.
+## Using the `hinfo` option means that some responses will be lies.
+## Unfortunately, the `hinfo` option appears to be required for Android 8+
+
+# blocked_query_response = 'refused'
+
+
+###############################################################################
+#                        Load Balancing & Performance                          #
+###############################################################################
+
+## Load-balancing strategy: 'wp2' (default), 'p2', 'ph', 'p<n>', 'first', or 'random'
+## 'wp2' (default): Weighted Power of Two - selects the better performing server
+## from two random candidates based on real-time RTT and success rates.
+## 'p2': Randomly choose 1 of the fastest 2 servers by latency.
+## 'ph': Randomly choose from fastest half of servers.
+## 'p<n>': Randomly choose from fastest n servers (e.g., 'p3' for fastest 3).
+## 'first': Always use the fastest server.
+## 'random': Randomly choose from all servers.
+## The response quality still depends on the server itself.
+
+# lb_strategy = 'wp2'
+
+## Set to `true` to constantly try to estimate the latency of all the resolvers
+## and adjust the load-balancing parameters accordingly, or to `false` to disable.
+## Default is `true` that makes 'p2' `lb_strategy` work well.
+
+# lb_estimator = true
+
+## Dynamically reduce query timeout as the number of concurrent connections
+## approaches max_clients to prevent overload. Value must be between 0.0 and 1.0.
+## 0.0 = no reduction, 1.0 = maximum reduction.
+## Uses a quartic curve to keep timeout high at low load and reduce sharply near limit.
+## For example, with timeout=5000ms, max_clients=250, and timeout_load_reduction=0.75:
+## - At 125 connections (50% load): timeout remains ~4765ms (95.3%)
+## - At 187 connections (75% load): timeout reduces to ~3826ms (76.5%)
+## - At 225 connections (90% load): timeout reduces to ~2539ms (50.8%)
+## - At 250 connections (100% load): timeout reduces to ~1250ms (25%)
+## This helps maintain responsiveness under high load by failing fast.
+
+# timeout_load_reduction = 0.75
+
+## Set to `true` to enable hot reloading of configuration files (like allowed-names.txt,
+## blocked-names.txt, etc.) when they are modified. This can increase CPU and memory usage.
+## Default is `false` (hot reloading is disabled).
+
+# enable_hot_reload = false
+
+
+###############################################################################
+#                                Logging                                       #
+###############################################################################
 
 ## Log level (0-6, default: 2 - 0 is very verbose, 6 only contains fatal errors)
 
 # log_level = 2
 
 
-## log file for the application
+## Log file for the application, as an alternative to sending logs to
+## the standard system logging service (syslog/Windows event log).
+##
+## This file is different from other log files, and will not be
+## automatically rotated by the application.
 
 # log_file = 'dnscrypt-proxy.log'
+
+
+## When using a log file, only keep logs from the most recent launch.
+
+# log_file_latest = true
 
 
 ## Use the system logger (syslog on Unix, Event Log on Windows)
@@ -1390,9 +1849,38 @@ keepalive = 30
 # use_syslog = true
 
 
+## Automatic log files rotation
+
+# Maximum log files size in MB - Set to 0 for unlimited.
+log_files_max_size = 10
+
+# How long to keep backup files, in days
+log_files_max_age = 7
+
+# Maximum log files backups to keep (or 0 to keep all backups)
+log_files_max_backups = 1
+
+
+###############################################################################
+#                           Certificate Management                             #
+###############################################################################
+
+## The maximum concurrency to reload certificates from the resolvers.
+## Default is 10.
+
+# cert_refresh_concurrency = 10
+
+
 ## Delay, in minutes, after which certificates are reloaded
 
 cert_refresh_delay = 240
+
+
+## Initially don't check DNSCrypt server certificates for expiration, and
+## only start checking them after a first successful connection to a resolver.
+## This can be useful on routers with no battery-backed clock.
+
+# cert_ignore_timestamp = false
 
 
 ## DNSCrypt: Create a new, unique key for every single DNS query
@@ -1407,52 +1895,102 @@ cert_refresh_delay = 240
 # tls_disable_session_tickets = false
 
 
-## DoH: Use a specific cipher suite instead of the server preference
+## DoH: Use TLS 1.2 and specific cipher suite instead of the server preference
 ## 49199 = TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 ## 49195 = TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 ## 52392 = TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
 ## 52393 = TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
 ##
 ## On non-Intel CPUs such as MIPS routers and ARM systems (Android, Raspberry Pi...),
-## the following suite improves performance.
+## uncommenting the following line may improve performance.
 ## This may also help on Intel CPUs running 32-bit operating systems.
+## However, this can cause issues fetching sources or connecting to some HTTP servers,
+## and should not be set on regular CPUs.
 ##
-## Keep tls_cipher_suite empty if you have issues fetching sources or
-## connecting to some DoH servers. Google and Cloudflare are fine with it.
+## Keep tls_cipher_suite undefined to let the app automatically choose secure parameters.
 
 # tls_cipher_suite = [52392, 49199]
 
 
-## Fallback resolver
-## This is a normal, non-encrypted DNS resolver, that will be only used
-## for one-shot queries when retrieving the initial resolvers list, and
-## only if the system DNS configuration doesn't work.
-## No user application queries will ever be leaked through this resolver,
-## and it will not be used after IP addresses of resolvers URLs have been found.
-## It will never be used if lists have already been cached, and if stamps
-## don't include host names without IP addresses.
-## It will not be used if the configured system DNS works.
-## A resolver supporting DNSSEC is recommended. This may become mandatory.
+## Log TLS key material to a file, for debugging purposes only.
+## This file will contain the TLS master key, which can be used to decrypt
+## all TLS traffic to/from DoH servers.
+## Never ever enable except for debugging purposes with a tool such as mitmproxy.
+
+# tls_key_log_file = '/tmp/keylog.txt'
+
+
+###############################################################################
+#                            Startup & Network                                 #
+###############################################################################
+
+## Bootstrap resolvers
 ##
-## People in China may need to use 114.114.114.114:53 here.
-## Other popular options include 8.8.8.8 and 1.1.1.1.
+## These are normal, non-encrypted DNS resolvers, that will be only used
+## for one-shot queries when retrieving the initial resolvers list and if
+## the system DNS configuration doesn't work.
+##
+## No user queries will ever be leaked through these resolvers, and they will
+## not be used after IP addresses of DoH resolvers have been found (if you are
+## using DoH).
+##
+## They will never be used if lists have already been cached, and if the stamps
+## of the configured servers already include IP addresses (which is the case for
+## most of DoH servers, and for all DNSCrypt servers and relays).
+##
+## They will not be used if the configured system DNS works, or after the
+## proxy already has at least one usable secure resolver.
+##
+## Resolvers supporting DNSSEC are recommended, and, if you are using
+## DoH, bootstrap resolvers should ideally be operated by a different entity
+## than the DoH servers you will be using, especially if you have IPv6 enabled.
+##
+## People in China may want to use 114.114.114.114:53 here.
+## Other popular options include 8.8.8.8, 9.9.9.9 and 1.1.1.1.
+##
+## If more than one resolver is specified, they will be tried in sequence.
+##
+## TL;DR: put valid standard resolver addresses here. Your actual queries will
+## not be sent there. If you're using DNSCrypt or Anonymized DNS and your
+## lists are up to date, these resolvers will not even be used.
 
-fallback_resolver = '9.9.9.9:53'
+bootstrap_resolvers = ['9.9.9.11:53', '8.8.8.8:53']
 
 
-## Never let dnscrypt-proxy try to use the system DNS settings;
-## unconditionally use the fallback resolver.
+## When internal DNS resolution is required, for example to retrieve
+## the resolvers list:
+##
+## - queries will be sent to dnscrypt-proxy itself, if it is already
+##   running with active servers (*)
+## - or else, queries will be sent to fallback servers
+## - finally, if `ignore_system_dns` is `false`, queries will be sent
+##   to the system DNS
+##
+## (*) this is incompatible with systemd sockets.
+## `listen_addresses` must not be empty.
 
-ignore_system_dns = false
+ignore_system_dns = true
 
 
 ## Maximum time (in seconds) to wait for network connectivity before
 ## initializing the proxy.
 ## Useful if the proxy is automatically started at boot, and network
 ## connectivity is not guaranteed to be immediately available.
-## Use 0 to disable.
+## Use 0 to not test for connectivity at all (not recommended),
+## and -1 to wait as much as possible.
 
 netprobe_timeout = 60
+
+## Address and port to try initializing a connection to, just to check
+## if the network is up. It can be any address and any port, even if
+## there is nothing answering these on the other side. Just don't use
+## a local address, as the goal is to check for Internet connectivity.
+## On Windows, a datagram with a single, nul byte will be sent, only
+## when the system starts.
+## On other operating systems, the connection will be initialized
+## but nothing will be sent at all.
+
+netprobe_address = '9.9.9.9:53'
 
 
 ## Offline mode - Do not use any remote encrypted servers.
@@ -1462,79 +2000,99 @@ netprobe_timeout = 60
 # offline_mode = false
 
 
-## Automatic log files rotation
+## Additional data to attach to outgoing queries.
+## These strings will be added as TXT records to queries.
+## Do not use, except on servers explicitly asking for extra data
+## to be present.
+## encrypted-dns-server can be configured to use this for access control
+## in the [access_control] section
 
-# Maximum log files size in MB
-log_files_max_size = 10
-
-# How long to keep backup files, in days
-log_files_max_age = 7
-
-# Maximum log files backups to keep (or 0 to keep all backups)
-log_files_max_backups = 1
+# query_meta = ['key1:value1', 'key2:value2', 'token:MySecretToken']
 
 
+###############################################################################
+#                                 Filters                                      #
+###############################################################################
 
-#########################
-#        Filters        #
-#########################
+## Note: if you are using dnsmasq, disable the `dnssec` option in dnsmasq if you
+## configure dnscrypt-proxy to do any kind of filtering (including the filters
+## below and blocklists).
+## You can still choose resolvers that do DNSSEC validation.
+
 
 ## Immediately respond to IPv6-related queries with an empty response
 ## This makes things faster when there is no IPv6 connectivity, but can
 ## also cause reliability issues with some stub resolvers.
-## Do not enable if you added a validating resolver such as dnsmasq in front
-## of the proxy.
 
-#block_ipv6 = false
 block_ipv6 = true
 
 
+## Immediately respond to A and AAAA queries for host names without a domain name
+## This also prevents "dotless domain names" from being resolved upstream.
 
-##################################################################################
-#        Route queries for specific domains to a dedicated set of servers        #
-##################################################################################
+block_unqualified = true
 
-## Example map entries (one entry per line):
-## example.com 9.9.9.9
-## example.net 9.9.9.9,8.8.8.8,1.1.1.1
+
+## Immediately respond to queries for local zones instead of leaking them to
+## upstream resolvers (always causing errors or timeouts).
+
+block_undelegated = true
+
+
+## TTL for synthetic responses sent when a request has been blocked (due to
+## IPv6 or blocklists).
+
+reject_ttl = 10
+
+
+###############################################################################
+#                              Forwarding                                      #
+###############################################################################
+
+## Route queries for specific domains to a dedicated set of servers
+
+## See the `example-forwarding-rules.txt` file for an example
 
 # forwarding_rules = 'forwarding-rules.txt'
 
 
-
-###############################
-#        Cloaking rules       #
-###############################
+###############################################################################
+#                              Cloaking                                        #
+###############################################################################
 
 ## Cloaking returns a predefined address for a specific name.
 ## In addition to acting as a HOSTS file, it can also return the IP address
 ## of a different name. It will also do CNAME flattening.
+## If 'cloak_ptr' is set, then PTR (reverse lookups) are enabled
+## for cloaking rules that do not contain wild cards.
 ##
-## Example map entries (one entry per line)
-## example.com     10.1.1.1
-## www.google.com  forcesafesearch.google.com
+## See the `example-cloaking-rules.txt` file for an example
 
 # cloaking_rules = 'cloaking-rules.txt'
 
+## TTL used when serving entries in cloaking-rules.txt
+
+# cloak_ttl = 600
+# cloak_ptr = false
 
 
-###########################
-#        DNS cache        #
-###########################
+###############################################################################
+#                                DNS Cache                                     #
+###############################################################################
 
 ## Enable a DNS cache to reduce latency and outgoing traffic
 
-cache = true
+cache = false
 
 
 ## Cache size
 
-cache_size = 512
+cache_size = 4096
 
 
 ## Minimum TTL for cached entries
 
-cache_min_ttl = 600
+cache_min_ttl = 2400
 
 
 ## Maximum TTL for cached entries
@@ -1552,57 +2110,98 @@ cache_neg_min_ttl = 60
 cache_neg_max_ttl = 600
 
 
+###############################################################################
+#                           Captive portal handling                            #
+###############################################################################
 
-###############################
-#        Query logging        #
-###############################
+[captive_portals]
 
-## Log client queries to a file
+## A file that contains a set of names used by operating systems to
+## check for connectivity and captive portals, along with hard-coded
+## IP addresses to return.
+
+# map_file = 'example-captive-portals.txt'
+
+
+###############################################################################
+#                            Local DoH server                                  #
+###############################################################################
+
+[local_doh]
+
+## dnscrypt-proxy can act as a local DoH server. By doing so, web browsers
+## requiring a direct connection to a DoH server in order to enable some
+## features will enable these, without bypassing your DNS proxy.
+
+## Addresses that the local DoH server should listen to
+
+# listen_addresses = ['127.0.0.1:3000']
+
+
+## Path of the DoH URL. This is not a file, but the part after the hostname
+## in the URL. By convention, `/dns-query` is frequently chosen.
+## For each `listen_address` the complete URL to access the server will be:
+## `https://<listen_address><path>` (ex: `https://127.0.0.1/dns-query`)
+
+# path = '/dns-query'
+
+
+## Certificate file and key - Note that the certificate has to be trusted.
+## Can be generated using the following command:
+## openssl req -x509 -nodes -newkey rsa:2048 -days 5000 -sha256 -keyout localhost.pem -out localhost.pem
+## See the documentation (wiki) for more information.
+
+# cert_file = 'localhost.pem'
+# cert_key_file = 'localhost.pem'
+
+
+###############################################################################
+#                              Query logging                                   #
+###############################################################################
 
 [query_log]
 
-  ## Path to the query log file (absolute, or relative to the same directory as the executable file)
+## Path to the query log file (absolute, or relative to the same directory as the config file)
+## Can be set to /dev/stdout in order to log to the standard output.
 
-  # file = 'query.log'
-
-
-  ## Query log format (currently supported: tsv and ltsv)
-
-  format = 'tsv'
+# file = 'query.log'
 
 
-  ## Do not log these query types, to reduce verbosity. Keep empty to log everything.
+## Query log format (currently supported: tsv and ltsv)
 
-  # ignored_qtypes = ['DNSKEY', 'NS']
+format = 'tsv'
 
 
+## Do not log these query types, to reduce verbosity. Keep empty to log everything.
 
-############################################
-#        Suspicious queries logging        #
-############################################
+# ignored_qtypes = ['DNSKEY', 'NS']
+
+
+###############################################################################
+#                        Suspicious queries logging                            #
+###############################################################################
+
+[nx_log]
 
 ## Log queries for nonexistent zones
 ## These queries can reveal the presence of malware, broken/obsolete applications,
 ## and devices signaling their presence to 3rd parties.
 
-[nx_log]
+## Path to the query log file (absolute, or relative to the same directory as the config file)
 
-  ## Path to the query log file (absolute, or relative to the same directory as the executable file)
-
-  # file = 'nx.log'
+# file = 'nx.log'
 
 
-  ## Query log format (currently supported: tsv and ltsv)
+## Query log format (currently supported: tsv and ltsv)
 
-  format = 'tsv'
+format = 'tsv'
 
 
+###############################################################################
+#                    Pattern-based blocking (blocklists)                       #
+###############################################################################
 
-######################################################
-#        Pattern-based blocking (blacklists)        #
-######################################################
-
-## Blacklists are made of one pattern per line. Example of valid patterns:
+## Blocklists are made of one pattern per line. Example of valid patterns:
 ##
 ##   example.com
 ##   =example.com
@@ -1611,123 +2210,144 @@ cache_neg_max_ttl = 600
 ##   ads*.example.*
 ##   ads*.example[0-9]*.com
 ##
-## Example blacklist files can be found at https://download.dnscrypt.info/blacklists/
-## A script to build blacklists from public feeds can be found in the
-## `utils/generate-domains-blacklists` directory of the dnscrypt-proxy source code.
+## Example blocklist files can be found at https://download.dnscrypt.info/blocklists/
+## A script to build blocklists from public feeds can be found in the
+## `utils/generate-domains-blocklists` directory of the dnscrypt-proxy source code.
 
-[blacklist]
+[blocked_names]
 
-  ## Path to the file of blocking rules (absolute, or relative to the same directory as the executable file)
+## Path to the file of blocking rules (absolute, or relative to the same directory as the config file)
 
-  # blacklist_file = 'blacklist.txt'
-
-
-  ## Optional path to a file logging blocked queries
-
-  # log_file = 'blocked.log'
+# blocked_names_file = 'blocked-names.txt'
 
 
-  ## Optional log format: tsv or ltsv (default: tsv)
+## Optional path to a file logging blocked queries
 
-  # log_format = 'tsv'
+# log_file = 'blocked-names.log'
 
 
+## Optional log format: tsv or ltsv (default: tsv)
 
-###########################################################
-#        Pattern-based IP blocking (IP blacklists)        #
-###########################################################
+# log_format = 'tsv'
 
-## IP blacklists are made of one pattern per line. Example of valid patterns:
+
+###############################################################################
+#                  Pattern-based IP blocking (IP blocklists)                   #
+###############################################################################
+
+## IP blocklists are made of one pattern per line. Example of valid patterns:
 ##
 ##   127.*
 ##   fe80:abcd:*
 ##   192.168.1.4
 
-[ip_blacklist]
+[blocked_ips]
 
-  ## Path to the file of blocking rules (absolute, or relative to the same directory as the executable file)
+## Path to the file of blocking rules (absolute, or relative to the same directory as the config file)
 
-  # blacklist_file = 'ip-blacklist.txt'
-
-
-  ## Optional path to a file logging blocked queries
-
-  # log_file = 'ip-blocked.log'
+# blocked_ips_file = 'blocked-ips.txt'
 
 
-  ## Optional log format: tsv or ltsv (default: tsv)
+## Optional path to a file logging blocked queries
 
-  # log_format = 'tsv'
+# log_file = 'blocked-ips.log'
 
 
+## Optional log format: tsv or ltsv (default: tsv)
 
-######################################################
-#   Pattern-based whitelisting (blacklists bypass)   #
-######################################################
+# log_format = 'tsv'
 
-## Whitelists support the same patterns as blacklists
-## If a name matches a whitelist entry, the corresponding session
+
+###############################################################################
+#                 Pattern-based allow lists (blocklists bypass)                #
+###############################################################################
+
+## Allowlists support the same patterns as blocklists
+## If a name matches an allowlist entry, the corresponding session
 ## will bypass names and IP filters.
 ##
 ## Time-based rules are also supported to make some websites only accessible at specific times of the day.
 
-[whitelist]
+[allowed_names]
 
-  ## Path to the file of whitelisting rules (absolute, or relative to the same directory as the executable file)
+## Path to the file of allow list rules (absolute, or relative to the same directory as the config file)
 
-  # whitelist_file = 'whitelist.txt'
-
-
-  ## Optional path to a file logging whitelisted queries
-
-  # log_file = 'whitelisted.log'
+# allowed_names_file = 'allowed-names.txt'
 
 
-  ## Optional log format: tsv or ltsv (default: tsv)
+## Optional path to a file logging allowed queries
 
-  # log_format = 'tsv'
+# log_file = 'allowed-names.log'
 
 
+## Optional log format: tsv or ltsv (default: tsv)
 
-##########################################
-#        Time access restrictions        #
-##########################################
+# log_format = 'tsv'
+
+
+###############################################################################
+#           Pattern-based allowed IPs lists (blocklists bypass)                #
+###############################################################################
+
+## Allowed IP lists support the same patterns as IP blocklists
+## If an IP response matches an allowed entry, the corresponding session
+## will bypass IP filters.
+##
+## Time-based rules are also supported to make some websites only accessible at specific times of the day.
+
+[allowed_ips]
+
+## Path to the file of allowed ip rules (absolute, or relative to the same directory as the config file)
+
+# allowed_ips_file = 'allowed-ips.txt'
+
+
+## Optional path to a file logging allowed queries
+
+# log_file = 'allowed-ips.log'
+
+## Optional log format: tsv or ltsv (default: tsv)
+
+# log_format = 'tsv'
+
+
+###############################################################################
+#                        Time access restrictions                              #
+###############################################################################
 
 ## One or more weekly schedules can be defined here.
-## Patterns in the name-based blocklist can optionally be followed with @schedule_name
+## Patterns in the name-based blocked_names file can optionally be followed with @schedule_name
 ## to apply the pattern 'schedule_name' only when it matches a time range of that schedule.
 ##
-## For example, the following rule in a blacklist file:
+## For example, the following rule in a blocklist file:
 ## *.youtube.* @time-to-sleep
-## would block access to YouTube only during the days, and period of the days
-## define by the 'time-to-sleep' schedule.
+## would block access to YouTube during the times defined by the 'time-to-sleep' schedule.
 ##
 ## {after='21:00', before= '7:00'} matches 0:00-7:00 and 21:00-0:00
 ## {after= '9:00', before='18:00'} matches 9:00-18:00
 
 [schedules]
 
-  # [schedules.'time-to-sleep']
-  # mon = [{after='21:00', before='7:00'}]
-  # tue = [{after='21:00', before='7:00'}]
-  # wed = [{after='21:00', before='7:00'}]
-  # thu = [{after='21:00', before='7:00'}]
-  # fri = [{after='23:00', before='7:00'}]
-  # sat = [{after='23:00', before='7:00'}]
-  # sun = [{after='21:00', before='7:00'}]
+# [schedules.time-to-sleep]
+#   mon = [{after='21:00', before='7:00'}]
+#   tue = [{after='21:00', before='7:00'}]
+#   wed = [{after='21:00', before='7:00'}]
+#   thu = [{after='21:00', before='7:00'}]
+#   fri = [{after='23:00', before='7:00'}]
+#   sat = [{after='23:00', before='7:00'}]
+#   sun = [{after='21:00', before='7:00'}]
 
-  # [schedules.'work']
-  # mon = [{after='9:00', before='18:00'}]
-  # tue = [{after='9:00', before='18:00'}]
-  # wed = [{after='9:00', before='18:00'}]
-  # thu = [{after='9:00', before='18:00'}]
-  # fri = [{after='9:00', before='17:00'}]
+# [schedules.work]
+#   mon = [{after='9:00', before='18:00'}]
+#   tue = [{after='9:00', before='18:00'}]
+#   wed = [{after='9:00', before='18:00'}]
+#   thu = [{after='9:00', before='18:00'}]
+#   fri = [{after='9:00', before='17:00'}]
 
 
-
-#########################
-#        Servers        #
-#########################
+###############################################################################
+#                                Servers                                       #
+###############################################################################
 
 ## Remote lists of available servers
 ## Multiple sources can be used simultaneously, but every source
@@ -1741,46 +2361,309 @@ cache_neg_max_ttl = 600
 ## must include the prefixes.
 ##
 ## If the `urls` property is missing, cache files and valid signatures
-## must be already present; This doesn't prevent these cache files from
+## must already be present. This doesn't prevent these cache files from
 ## expiring after `refresh_delay` hours.
+## `refreshed_delay` must be in the [24..168] interval.
+## The minimum delay of 24 hours (1 day) avoids unnecessary requests to servers.
+## The maximum delay of 168 hours (1 week) ensures cache freshness.
 
 [sources]
 
-  ## An example of a remote source from https://github.com/DNSCrypt/dnscrypt-resolvers
+### An example of a remote source from https://github.com/DNSCrypt/dnscrypt-resolvers
 
-  [sources.'public-resolvers']
-  urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v2/public-resolvers.md', 'https://download.dnscrypt.info/resolvers-list/v2/public-resolvers.md']
-  cache_file = 'public-resolvers.md'
-  minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
-  refresh_delay = 72
-  prefix = ''
+[sources.public-resolvers]
+urls = [
+  'https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md',
+  'https://download.dnscrypt.info/resolvers-list/v3/public-resolvers.md',
+]
+cache_file = 'public-resolvers.md'
+minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+refresh_delay = 73
+prefix = ''
 
-  ## Quad9 over DNSCrypt - https://quad9.net/
+### Anonymized DNS relays
 
-  # [sources.quad9-resolvers]
-  # urls = ["https://www.quad9.net/quad9-resolvers.md"]
-  # minisign_key = "RWQBphd2+f6eiAqBsvDZEBXBGHQBJfeG6G+wJPPKxCZMoEQYpmoysKUN"
-  # cache_file = "quad9-resolvers.md"
-  # refresh_delay = 72
-  # prefix = "quad9-"
+[sources.relays]
+urls = [
+  'https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/relays.md',
+  'https://download.dnscrypt.info/resolvers-list/v3/relays.md',
+]
+cache_file = 'relays.md'
+minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+refresh_delay = 73
+prefix = ''
 
-  ## Another example source, with resolvers censoring some websites not appropriate for children
-  ## This is a subset of the `public-resolvers` list, so enabling both is useless
+### ODoH (Oblivious DoH) servers and relays
 
-  #  [sources.'parental-control']
-  #  urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v2/parental-control.md', 'https://download.dnscrypt.info/resolvers-list/v2/parental-control.md']
-  #  cache_file = 'parental-control.md'
-  #  minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+# [sources.odoh-servers]
+#   urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/odoh-servers.md', 'https://download.dnscrypt.info/resolvers-list/v3/odoh-servers.md']
+#   cache_file = 'odoh-servers.md'
+#   minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+#   refresh_delay = 73
+#   prefix = ''
+# [sources.odoh-relays]
+#   urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/odoh-relays.md', 'https://download.dnscrypt.info/resolvers-list/v3/odoh-relays.md']
+#   cache_file = 'odoh-relays.md'
+#   minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+#   refresh_delay = 73
+#   prefix = ''
+
+### Quad9
+
+# [sources.quad9-resolvers]
+#   urls = ['https://quad9.net/dnscrypt/quad9-resolvers.md']
+#   minisign_key = 'RWQBphd2+f6eiAqBsvDZEBXBGHQBJfeG6G+wJPPKxCZMoEQYpmoysKUN'
+#   cache_file = 'quad9-resolvers.md'
+#   prefix = 'quad9-'
+
+### Another example source, with resolvers censoring some websites not appropriate for children
+### This is a subset of the `public-resolvers` list, so enabling both is useless.
+
+# [sources.parental-control]
+#   urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/parental-control.md', 'https://download.dnscrypt.info/resolvers-list/v3/parental-control.md']
+#   cache_file = 'parental-control.md'
+#   minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+
+### dnscry.pt servers - See https://www.dnscry.pt
+
+#  [sources.dnscry-pt-resolvers]
+#    urls = ["https://www.dnscry.pt/resolvers.md"]
+#    minisign_key = "RWQM31Nwkqh01x88SvrBL8djp1NH56Rb4mKLHz16K7qsXgEomnDv6ziQ"
+#    cache_file = "dnscry.pt-resolvers.md"
+#    refresh_delay = 73
+#    prefix = "dnscry.pt-"
 
 
+###############################################################################
+#                        Servers with known bugs                               #
+###############################################################################
+
+[broken_implementations]
+
+## Cisco servers currently cannot handle queries larger than 1472 bytes, and don't
+## truncate responses larger than questions as expected by the DNSCrypt protocol.
+## This prevents large responses from being received over UDP and over relays.
+##
+## Older versions of the `dnsdist` server software had a bug with queries larger
+## than 1500 bytes. This is fixed since `dnsdist` version 1.5.0, but
+## some server may still run an outdated version.
+##
+## The list below enables workarounds to make non-relayed usage more reliable
+## until the servers are fixed.
+
+fragments_blocked = [
+  'cisco',
+  'cisco-ipv6',
+  'cisco-familyshield',
+  'cisco-familyshield-ipv6',
+  'cisco-sandbox',
+  'cleanbrowsing-adult',
+  'cleanbrowsing-adult-ipv6',
+  'cleanbrowsing-family',
+  'cleanbrowsing-family-ipv6',
+  'cleanbrowsing-security',
+  'cleanbrowsing-security-ipv6',
+]
+
+
+###############################################################################
+#                Certificate-based client authentication for DoH               #
+###############################################################################
+
+[doh_client_x509_auth]
+
+## Use an X509 certificate to authenticate yourself when connecting to DoH servers.
+## This is only useful if you are operating your own, private DoH server(s).
+## 'creds' maps servers to certificates, and supports multiple entries.
+## If you are not using the standard root CA, an optional "root_ca"
+## property set to the path to a root CRT file can be added to a server entry.
+
+# creds = [
+#    { server_name='*', client_cert='client.crt', client_key='client.key' }
+# ]
+
+
+###############################################################################
+#                          Anonymized DNS                                      #
+###############################################################################
+
+[anonymized_dns]
+
+## Routes are indirect ways to reach DNSCrypt servers.
+##
+## A route maps a server name ("server_name") to one or more relays that will be
+## used to connect to that server.
+##
+## A relay can be specified as a DNS Stamp (either a relay stamp, or a
+## DNSCrypt stamp) or a server name.
+##
+## The following example routes "example-server-1" via `anon-example-1` or `anon-example-2`,
+## and "example-server-2" via the relay whose relay DNS stamp is
+## "sdns://gRIxMzcuNzQuMjIzLjIzNDo0NDM".
+##
+## !!! THESE ARE JUST EXAMPLES !!!
+##
+## Review the list of available relays from the "relays.md" file, and, for each
+## server you want to use, define the relays you want connections to go through.
+##
+## Carefully choose relays and servers so that they are run by different entities.
+##
+## "server_name" can also be set to "*" to define a default route, for all servers:
+## { server_name='*', via=['anon-example-1', 'anon-example-2'] }
+##
+## If a route is ["*"], the proxy automatically picks a relay on a distinct network.
+## { server_name='*', via=['*'] } is also an option, but is likely to be suboptimal.
+##
+## Manual selection is always recommended over automatic selection, so that you can
+## select (relay,server) pairs that work well and fit your own criteria (close by or
+## in different countries, operated by different entities, on distinct ISPs...)
+
+# routes = [
+#    { server_name='example-server-1', via=['anon-example-1', 'anon-example-2'] },
+#    { server_name='example-server-2', via=['sdns://gRIxMzcuNzQuMjIzLjIzNDo0NDM'] }
+# ]
+
+
+## Skip resolvers incompatible with anonymization instead of using them directly
+
+skip_incompatible = false
+
+
+## If public server certificates for a non-conformant server cannot be
+## retrieved via a relay, try getting them directly. Actual queries
+## will then always go through relays.
+
+# direct_cert_fallback = false
+
+
+###############################################################################
+#                                 DNS64                                        #
+###############################################################################
+
+[dns64]
+
+## DNS64 is a mechanism for synthesizing AAAA records from A records.
+## It is used with an IPv6/IPv4 translator to enable client-server
+## communication between an IPv6-only client and an IPv4-only server,
+## without requiring any changes to either the IPv6 or the IPv4 node,
+## for the class of applications that work through NATs.
+##
+## There are two options to synthesize such records:
+## Option 1: Using a set of static IPv6 prefixes;
+## Option 2: By discovering the IPv6 prefix from DNS64-enabled resolver.
+##
+## If both options are configured - only static prefixes are used.
+## (Ref. RFC6147, RFC6052, RFC7050)
+##
+## Do not enable unless you know what DNS64 is and why you need it, or else
+## you won't be able to connect to anything at all.
+
+## Static prefix(es) as Pref64::/n CIDRs
+
+# prefix = ['64:ff9b::/96']
+
+## DNS64-enabled resolver(s) to discover Pref64::/n CIDRs
+## These resolvers are used to query for Well-Known IPv4-only Name (WKN) "ipv4only.arpa." to discover only.
+## Set with your ISP's resolvers in case of custom prefixes (other than Well-Known Prefix 64:ff9b::/96).
+## IMPORTANT: Default resolvers listed below support Well-Known Prefix 64:ff9b::/96 only.
+
+# resolver = ['[2606:4700:4700::64]:53', '[2001:4860:4860::64]:53']
+
+
+###############################################################################
+#                           IP Encryption                                      #
+###############################################################################
+
+[ip_encryption]
+
+## Encrypt client IP addresses in plugin logs using IPCrypt
+## This provides privacy for client IP addresses while maintaining
+## the ability to distinguish between different clients in logs
+
+## Encryption algorithm (default: "none")
+## - "none": No encryption (default)
+## - "ipcrypt-deterministic": Deterministic encryption (same IP always encrypts to same value) - requires 16-byte key
+## - "ipcrypt-nd": Non-deterministic encryption with 8-byte tweak - requires 16-byte key
+## - "ipcrypt-ndx": Non-deterministic encryption with 16-byte tweak (extended) - requires 32-byte key
+## - "ipcrypt-pfx": Prefix-preserving encryption (preserves network prefix relationships) - requires 32-byte key
+
+algorithm = "none"
+
+## Encryption key in hexadecimal format (required if algorithm is not "none")
+## Key size depends on algorithm:
+## - ipcrypt-deterministic: 32 hex chars (16 bytes) - Generate with: openssl rand -hex 16
+## - ipcrypt-nd: 32 hex chars (16 bytes) - Generate with: openssl rand -hex 16
+## - ipcrypt-ndx: 64 hex chars (32 bytes) - Generate with: openssl rand -hex 32
+## Example for deterministic/nd: key = "1234567890abcdef1234567890abcdef"
+## Example for ndx: key = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+## IMPORTANT: Keep this key secret
+
+key = ""
+
+
+###############################################################################
+#                            Monitoring UI                                     #
+###############################################################################
+
+[monitoring_ui]
+
+## Enable the monitoring UI
+enabled = false
+
+## Listen address for the monitoring UI
+listen_address = "127.0.0.1:8080"
+
+## Optional username and password for basic authentication
+## To disable authentication, set username to an empty string: username = ""
+## If both username and password are empty, no authentication is required
+username = "admin"
+password = "changeme"
+
+## Optional TLS certificate and key for HTTPS
+## If both are empty, HTTP will be used
+tls_certificate = ""
+tls_key = ""
+
+## Enable query logging in the monitoring UI
+## This will show recent queries in the UI
+enable_query_log = true
+
+## Privacy level for the monitoring UI
+## 0: show all details including client IPs
+## 1: anonymize client IPs (default)
+## 2: aggregate data only (no individual queries or domains shown)
+privacy_level = 1
+
+## Maximum number of recent query log entries to keep in memory
+## Helps control memory usage on high-traffic servers
+## Default: 100
+# max_query_log_entries = 100
+
+## Maximum memory usage in MB for recent query logs
+## Automatic cleanup when limit is exceeded
+## Default: 1
+# max_memory_mb = 1
+
+## Enable Prometheus metrics endpoint
+## Default: false
+# prometheus_enabled = false
+
+## Path for Prometheus metrics endpoint
+## Default: /metrics
+# prometheus_path = "/metrics"
+
+
+###############################################################################
+#                            Static entries                                    #
+###############################################################################
+
+[static]
 
 ## Optional, local, static list of additional servers
 ## Mostly useful for testing your own servers.
 
-[static]
-
-  # [static.'google']
-  # stamp = 'sdns://AgUAAAAAAAAAAAAOZG5zLmdvb2dsZS5jb20NL2V4cGVyaW1lbnRhbA'
+# [static.myserver]
+#   stamp = 'sdns://AQcAAAAAAAAAAAAQMi5kbnNjcnlwdC1jZXJ0Lg'
 #+END_SRC
 
 ***** dnscrypt-proxy.toml tangle
@@ -1788,17 +2671,17 @@ cache_neg_max_ttl = 600
 :ORDERED:  t
 :END:
 
-+ root dir
+****** root dir
 
 #+NAME: dnscrypt-proxy.toml-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/usr/local/etc/dnscrypt-proxy/dnscrypt-proxy.toml"
+#+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/dnscrypt-proxy/dnscrypt-proxy.toml"
 <<dnscrypt-proxy.toml>>
 #+END_SRC
   
-+ current dir
+****** current dir
 
 #+NAME: dnscrypt-proxy.toml-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "usr/local/etc/dnscrypt-proxy/dnscrypt-proxy.toml"
+#+BEGIN_SRC conf :tangle "usr/local/etc/dnscrypt-proxy/dnscrypt-proxy.toml"
 <<dnscrypt-proxy.toml>>
 #+END_SRC
 
@@ -1815,7 +2698,7 @@ cache_neg_max_ttl = 600
 #+NAME: pkg/repos/poudriere.conf
 #+BEGIN_SRC conf
 Poudriere: {
-    url: "file:///usr/local/poudriere/data/packages/freebsd_14-0x64-HEAD"
+    url: "file:///usr/local/poudriere/data/packages/freebsd_15-0x64-quarterly"
     mirror_type: "srv",
     signature_type: "pubkey",
     pubkey: "/usr/local/etc/ssl/certs/poudriere.cert",
@@ -1829,17 +2712,17 @@ Poudriere: {
 :ORDERED:  t
 :END:
 
-+ root dir
+******* root dir
 
 #+NAME: pkg/repos/poudriere.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/usr/local/etc/pkg/repos/poudriere.conf"
+#+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/pkg/repos/poudriere.conf"
 <<pkg/repos/poudriere.conf>>
 #+END_SRC
   
-+ current dir
+******* current dir
 
 #+NAME: pkg/repos/poudriere.conf-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "usr/local/etc/pkg/repos/poudriere.conf"
+#+BEGIN_SRC conf :tangle "usr/local/etc/pkg/repos/poudriere.conf"
 <<pkg/repos/poudriere.conf>>
 #+END_SRC
 
@@ -1853,51 +2736,35 @@ Poudriere: {
 
 #+NAME: doas
 #+BEGIN_SRC conf
+#=========================================================================#
+# doas.conf
+#=========================================================================#
+
+#=========================================================================#
 # permit user
-permit keepenv :djwilcox
+#=========================================================================#
 
-# mount drives
-permit nopass :djwilcox cmd mount
-permit nopass :djwilcox cmd umount
+permit keepenv setenv { PATH } djwilcox
 
-# restart networking
-permit nopass :djwilcox cmd service args netif start
-permit nopass :djwilcox cmd service args netif stop
-permit nopass :djwilcox cmd service args netif restart
-permit nopass :djwilcox cmd service
 
-# ifconfig wlan0
-permit nopass :djwilcox cmd ifconfig args wlan0 up
-permit nopass :djwilcox cmd ifconfig args wlan0 down
+#=========================================================================#
+# allow root to switch to our user
+#=========================================================================#
 
-# ifconfig ue0 - usb ethenet
-permit nopass :djwilcox cmd ifconfig args ue0 up
-permit nopass :djwilcox cmd ifconfig args ue0 down
+permit nopass keepenv setenv { PATH } root as djwilcox
 
-# ifconfig bge0 - thunderbolt ethernet
-permit nopass :djwilcox cmd ifconfig args bge0 up
-permit nopass :djwilcox cmd ifconfig args bge0 down
 
-# ifconfig scan and wpa_supplicant
-permit nopass :djwilcox cmd ifconfig args wlan0 list scan
-permit nopass :djwilcox cmd wpa_supplicant args -B -i wlan0 -c /etc/wpa_supplicant.conf 
+#=========================================================================#
+# permit user - no pass
+#=========================================================================#
 
-# pkg update
-permit nopass :djwilcox cmd pkg args update
+permit nopass keepenv setenv { PATH } djwilcox
 
-# pkg upgrade
-permit nopass :djwilcox cmd pkg args upgrade
 
-# dmesg
-permit nopass :djwilcox cmd dmesg
-
-# sysctl
-permit nopass :djwilcox cmd sysctl
-
-# chroot
-permit nopass :djwilcox cmd chroot
-
+#=========================================================================#
 # root as root
+#=========================================================================#
+
 permit nopass keepenv root as root
 #+END_SRC
 
@@ -1906,450 +2773,16 @@ permit nopass keepenv root as root
 :ORDERED:  t
 :END:
 
-+ root dir
+***** root dir
 
 #+NAME: doas-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/usr/local/etc/doas.conf"
+#+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/doas.conf"
 <<doas>>
 #+END_SRC
   
-+ current dir
+***** current dir
 
 #+NAME: doas-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "usr/local/etc/doas.conf"
+#+BEGIN_SRC conf :tangle "usr/local/etc/doas.conf"
 <<doas>>
-#+END_SRC
-
-*** poudriere.conf
-
-#+begin_example
-/usr/local/etc/poudriere.conf
-#+end_example
-
-**** poudriere.conf config
-
-#+NAME: poudriere.conf
-#+BEGIN_SRC conf
-
-# Poudriere can optionally use ZFS for its ports/jail storage. For
-# ZFS define ZPOOL, otherwise set NO_ZFS=yes
-# 
-#### ZFS
-# The pool where poudriere will create all the filesystems it needs
-# poudriere will use ${ZPOOL}/${ZROOTFS} as its root
-#
-# You need at least 7GB of free space in this pool to have a working
-# poudriere.
-#
-ZPOOL=zroot
-
-### NO ZFS
-# To not use ZFS, define NO_ZFS=yes
-#NO_ZFS=yes
-
-# root of the poudriere zfs filesystem, by default /poudriere
-ZROOTFS=/poudriere
-
-# the host where to download sets for the jails setup
-# You can specify here a host or an IP
-# replace _PROTO_ by http or ftp
-# replace _CHANGE_THIS_ by the hostname of the mirrors where you want to fetch
-# by default: ftp://ftp.freebsd.org
-#
-# Also note that every protocols supported by fetch(1) are supported here, even
-# file:///
-# Suggested: https://download.FreeBSD.org
-FREEBSD_HOST=https://download.FreeBSD.org
-
-# By default the jails have no /etc/resolv.conf, you will need to set
-# RESOLV_CONF to a file on your hosts system that will be copied has
-# /etc/resolv.conf for the jail, except if you don't need it (using an http
-# proxy for example)
-RESOLV_CONF=/etc/resolv.conf
-
-# The directory where poudriere will store jails and ports
-BASEFS=/usr/local/poudriere
-
-# The directory where the jail will store the packages and logs
-# by default a zfs filesystem will be created and set to
-# ${BASEFS}/data
-#
-#POUDRIERE_DATA=${BASEFS}/data
-
-# Use portlint to check ports sanity
-USE_PORTLINT=no
-
-# When building packages, a memory device can be used to speedup the build.
-# Only one of MFSSIZE or USE_TMPFS is supported. TMPFS is generally faster
-# and will expand to the needed amount of RAM. MFS is a slower since it
-# uses UFS and several abstraction layers.
-
-# If set WRKDIRPREFIX will be mdmfs of the given size (mM or gG)
-#MFSSIZE=4G
-
-# Use tmpfs(5)
-# This can be a space-separated list of options:
-# wrkdir    - Use tmpfs(5) for port building WRKDIRPREFIX
-# data      - Use tmpfs(5) for poudriere cache/temp build data
-# localbase - Use tmpfs(5) for LOCALBASE (installing ports for packaging/testing)
-# all       - Run the entire build in memory, including builder jails.
-# yes       - Enables tmpfs(5) for wrkdir and data
-# no        - Disable use of tmpfs(5)
-# EXAMPLE: USE_TMPFS="wrkdir data"
-USE_TMPFS=yes
-
-# How much memory to limit tmpfs size to for *each builder* in GiB
-# (default: none)
-#TMPFS_LIMIT=8
-
-# How much memory to limit jail processes to for *each builder*
-# in GiB (default: none)
-#MAX_MEMORY=8
-
-# How many file descriptors to limit each jail process to (default: 1024)
-# This can also be set per PKGBASE, such as MAX_FILES_RStudio=2048.
-# Package names with hyphens (-) should be replaced with underscores (_).
-#MAX_FILES=1024
-
-# If set the given directory will be used for the distfiles
-# This allows to share the distfiles between jails and ports tree
-# If this is "no", poudriere must be supplied a ports tree that already has
-# the required distfiles.
-DISTFILES_CACHE=/usr/ports/distfiles
-
-# If set the ports tree marked to use git will use the defined
-# mirror (default: git.FreeBSD.org/port.git)
-#
-# Example to use github mirror:
-#GIT_BASEURL=https://github.com/freebsd/freebsd-src.git
-
-# If set the source tree marked to use git will use the defined
-# mirror (default: git.FreeBSD.org/src.git)
-#
-# Example to use github mirror:
-#GIT_PORTSURL=https://github.com/freebsd/freebsd-ports.git
-
-# If set the ports tree or source tree marked to use svn will use the defined
-# mirror (default: svn.FreeBSD.org)
-# The SSL fingerprints are published here:
-# https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/svn.html#svn-mirrors
-#SVN_HOST=svn.FreeBSD.org
-
-# Automatic OPTION change detection
-# When bulk building packages, compare the options from kept packages to
-# the current options to be built. If they differ, the existing package
-# will be deleted and the port will be rebuilt.
-# Valid options: yes, no, verbose
-# verbose will display the old and new options
-CHECK_CHANGED_OPTIONS=verbose
-
-# Automatic Dependency change detection
-# When bulk building packages, compare the dependencies from kept packages to
-# the current dependencies for every port. If they differ, the existing package
-# will be deleted and the port will be rebuilt. This helps catch changes such
-# as DEFAULT_RUBY_VERSION, PERL_VERSION, WITHOUT_X11 that change dependencies
-# for many ports.
-# Valid options: yes, no
-# Default: yes
-CHECK_CHANGED_DEPS=yes
-
-# Consider bad dependency lines on the wrong PKGNAME as fatal.
-# For example:
-#    BUILD_DEPENDS=  p5-List-MoreUtils>=0:lang/p5-List-MoreUtils
-# If this port's PKGNAME were really "List-MoreUtils" then it would
-# not be recorded into the resulting package.  The next build with
-# CHECK_CHANGED_DEPS enabled would consider it a "new dependency"
-# since it is in the port but not in the package.  This is usually
-# a warning but can be made fatal instead by enabling this option.
-# Default: no
-#BAD_PKGNAME_DEPS_ARE_FATAL=yes
-
-# Path to the RSA key to sign the PKG repo with. See pkg-repo(8)
-# This produces a repo that supports SIGNATURE_TYPE=PUBKEY
-# Default: not set
-PKG_REPO_SIGNING_KEY=/usr/local/etc/ssl/keys/poudriere.key
-
-# Command to sign the PKG repo with. See pkg-repo(8)
-# This produces a repo that supports SIGNATURE_TYPE=FINGERPRINTS
-# Default: not set
-#SIGNING_COMMAND=ssh signing-server sign.sh
-
-# Repo signing command execution context
-# If SIGNING_COMMAND is set, run pkg-repo(8) on the host?
-#   no  -   Run in the jail
-#   yes -   Run on the host
-# Default: no
-#PKG_REPO_FROM_HOST=yes
-
-# ccache support. Supply the path to your ccache cache directory.
-# It will be mounted into the jail and be shared among all jails.
-# It is recommended that extra ccache configuration be done with
-# ccache -o rather than from the environment.
-#CCACHE_DIR=/var/cache/ccache
-
-# Static ccache support from host.  This uses the existing
-# ccache from the host in the build jail.  This is useful for
-# using ccache+memcached which cannot easily be bootstrapped
-# otherwise.  The path to the PREFIX where ccache was installed
-# must be used here, and ccache must have been built statically.
-# Note also that ccache+memcached will require network access
-# which is normally disabled.  Separately setting RESTRICT_NETWORKING=no
-# may be required for non-localhost memcached servers.
-#CCACHE_STATIC_PREFIX=/usr/local
-
-# The jails normally only allow network access during the 'make fetch'
-# phase.  This is a security restriction to prevent random things
-# ran during a build from accessing the network.  Disabling this
-# is not advised.  ALLOW_NETWORKING_PACKAGES may be used to allow networking
-# for a subset of packages only.
-#RESTRICT_NETWORKING=yes
-#ALLOW_NETWORKING_PACKAGES="npm-foo"
-
-# parallel build support.
-#
-# By default poudriere uses hw.ncpu to determine the number of builders.
-# You can override this default by changing PARALLEL_JOBS here, or
-# by specifying the -J flag to bulk/testport.
-#
-# Example to define PARALLEL_JOBS to one single job
-# PARALLEL_JOBS=1
-
-# How many jobs should be used for preparing the build? These tend to
-# be more IO bound and may be worth tweaking. Default: PARALLEL_JOBS * 1.25
-# PREPARE_PARALLEL_JOBS=1
-
-
-# If set, failed builds will save the WRKDIR to ${POUDRIERE_DATA}/wrkdirs
-# SAVE_WRKDIR=yes
-
-# Choose the default format for the workdir packing: could be tar,tgz,tbz,txz,tzst
-# default is tbz
-# WRKDIR_ARCHIVE_FORMAT=tbz
-
-# Disable Linux support
-# NOLINUX=yes
-
-# By default poudriere sets FORCE_PACKAGE
-# To disable it (useful when building public packages):
-# NO_FORCE_PACKAGE=yes
-
-# By default poudriere sets PACKAGE_BUILDING
-# To disable it:
-# NO_PACKAGE_BUILDING=yes
-
-# If you are using a proxy define it here:
-# export HTTP_PROXY=bla
-# export FTP_PROXY=bla
-#
-# Cleanout the restricted packages
-# NO_RESTRICTED=yes
-
-# By default MAKE_JOBS is disabled to allow only one process per cpu
-# Use the following to allow it anyway
-# ALLOW_MAKE_JOBS=yes
-
-# List of packages that will always be allowed to use MAKE_JOBS
-# regardless of ALLOW_MAKE_JOBS. This is useful for allowing ports
-# which holdup the rest of the queue to build more quickly.
-#ALLOW_MAKE_JOBS_PACKAGES="pkg ccache py*"
-
-# Timestamp every line of build logs
-# Default: no
-#TIMESTAMP_LOGS=no
-
-# URL where your POUDRIERE_DATA/logs are hosted
-# This will be used for giving URL hints to the HTML output when
-# scheduling and starting builds
-#URL_BASE=http://yourdomain.com/poudriere/
-
-
-# This defines the max time (in seconds) that a command may run for a build
-# before it is killed for taking too long. Default: 86400
-#MAX_EXECUTION_TIME=86400
-
-# This defines the time (in seconds) before a command is considered to
-# be in a runaway state for having no output on stdout. Default: 7200
-#NOHANG_TIME=7200
-
-
-# The repository is updated atomically if set yes. This leaves the
-# repository untouched until the build completes. This involves using
-# hardlinks and symlinks. The operations are fast, but can be intrusive
-# for remote syncing or backups.
-# Recommended to always keep on.
-# Default: yes
-#ATOMIC_PACKAGE_REPOSITORY=yes
-
-# When using ATOMIC_PACKAGE_REPOSITORY, commit the packages if some
-# packages fail to build. Ignored ports are considered successful.
-# This can be set to 'no' to only commit the packages once no failures
-# are encountered.
-# Default: yes
-#COMMIT_PACKAGES_ON_FAILURE=yes
-
-# Keep older package repositories. This can be used to rollback a system
-# or to bisect issues by changing the repository to one of the older
-# versions and reinstalling everything with `pkg upgrade -f`
-# ATOMIC_PACKAGE_REPOSITORY is required for this.
-# Default: no
-#KEEP_OLD_PACKAGES=no
-
-# How many old package repositories to keep with KEEP_OLD_PACKAGES
-# Default: 5
-#KEEP_OLD_PACKAGES_COUNT=5
-
-# Make testing errors fatal.
-# If set to 'no', ports with test failure will be marked as failed but still
-# packaged to permit testing dependent ports (useful for bulk -t -a)
-# Default: yes
-#PORTTESTING_FATAL=yes
-
-# Define the building jail hostname to be used when building the packages
-# Some port/packages hardcode the hostname of the host during build time
-# This is a necessary setup for reproducible builds.
-#BUILDER_HOSTNAME=pkg.FreeBSD.org
-
-# Define to get a predictable timestamp on the ports tree
-# This is a necessary setup for reproducible builds.
-#PRESERVE_TIMESTAMP=yes
-
-# Define to yes to build and stage as a regular user
-# Default: yes, unless CCACHE_DIR is set and CCACHE_DIR_NON_ROOT_SAFE is not
-# set.  Note that to use ccache with BUILD_AS_NON_ROOT you will need to
-# use a non-shared CCACHE_DIR that is only built by PORTBUILD_USER and chowned
-# to that user.  Then set CCACHE_DIR_NON_ROOT_SAFE to yes.
-#BUILD_AS_NON_ROOT=no
-
-# Define to the username to build as when BUILD_AS_NON_ROOT is yes.
-# Default: nobody (uid PORTBUILD_UID)
-#PORTBUILD_USER=nobody
-
-# Define to the uid to use for PORTBUILD_USER if the user does not
-# already exist in the jail.
-# Default: 65532
-#PORTBUILD_UID=65534
-
-# Define pkgname globs to boost priority for
-# Default: none
-#PRIORITY_BOOST="pypy openoffice*"
-
-# Define format for buildnames
-# Default: %Y-%m-%d_%Hh%Mm%Ss
-# ISO8601:
-#BUILDNAME_FORMAT="%FT%T%z"
-
-# Define format for build duration times
-# Default: %H:%M:%S
-#DURATION_FORMAT="%H:%M:%S"
-
-# Use colors when in a TTY
-# Default: yes
-#USE_COLORS=yes
-
-# Only build what is requested. Do not rebuild build deps if nothing requested
-# depends on them. This can create an inconsistent repository if you often
-# build one-off packages but expect the repository to stay consistent.
-# Defaut: yes
-#TRIM_ORPHANED_BUILD_DEPS=yes
-
-# A list of directories to exclude from leftover and filesystem violation
-# mtree checks.  Ccache is used here as an example but is already
-# excluded by default.  There is no need to add it here unless a
-# special configuration is used where it is a problem.
-# Default: none
-#LOCAL_MTREE_EXCLUDES="/usr/obj /var/tmp/ccache"
-
-# Set to hosted to use the /data directory instead of inline style HTML
-# Default: inline
-#HTML_TYPE="hosted"
-
-# Set to track remaining ports in the HTML interface.  This can slow down
-# processing of the queue slightly, especially for bulk -a builds.
-# Default: no
-#HTML_TRACK_REMAINING=yes
-#+END_SRC
-
-**** poudriere.conf tangle
-:PROPERTIES:
-:ORDERED:  t
-:END:
-
-+ root dir
-
-#+NAME: poudriere.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/usr/local/etc/poudriere.conf"
-<<poudriere.conf>>
-#+END_SRC
-  
-+ current dir
-
-#+NAME: poudriere.conf-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "usr/local/etc/poudriere.conf"
-<<poudriere.conf>>
-#+END_SRC
-
-*** poudriere.d
-**** make.conf
-
-#+begin_example
-/usr/local/etc/poudriere.d/make.conf
-#+end_example
-
-***** make.conf config
-
-#+NAME: make.conf
-#+BEGIN_SRC conf
-DISABLE_LICENSES=yes
-#+END_SRC
-
-***** make.conf tangle
-:PROPERTIES:
-:ORDERED:  t
-:END:
-
-+ root dir
-
-#+NAME: make.conf-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/usr/local/etc/poudriere.d/make.conf"
-<<make.conf>>
-#+END_SRC
-  
-+ current dir
-
-#+NAME: make.conf-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "usr/local/etc/poudriere.d/make.conf"
-<<make.conf>>
-#+END_SRC
-
-**** port-list
-
-#+begin_example
-/usr/local/etc/poudriere.d/port-list
-#+end_example
-
-***** port-list config
-
-#+NAME: port-list
-#+BEGIN_SRC conf
-www/linux-widevine-cdm
-
-#+END_SRC
-
-***** port-list tangle
-:PROPERTIES:
-:ORDERED:  t
-:END:
-
-+ root dir
-
-#+NAME: port-list-root-dir
-#+BEGIN_SRC conf :noweb yes :tangle "/sudo::/usr/local/etc/poudriere.d/port-list"
-<<port-list>>
-#+END_SRC
-  
-+ current dir
-
-#+NAME: port-list-current-dir
-#+BEGIN_SRC conf :noweb yes :tangle "usr/local/etc/poudriere.d/port-list"
-<<port-list>>
 #+END_SRC
