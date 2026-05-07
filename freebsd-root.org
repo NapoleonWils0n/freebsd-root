@@ -919,7 +919,7 @@ devfs_system_ruleset="localrules"
 # ethernet mac address set to wifi mac address
 #=========================================================================#
 
-ifconfig_ue0="ether 78:2b:46:ee:27:a3"
+ifconfig_ue0="ether 00:c0:ca:32:9c:f4"
 wlans_iwlwifi0="wlan0"
 ifconfig_wlan0="WPA"
 create_args_wlan0="country GB"
