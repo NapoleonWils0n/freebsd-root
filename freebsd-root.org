@@ -78,7 +78,8 @@ coretemp_load="YES"
 #===============================================================================
 
 wsp_load="YES"
-
+hms_load="YES"
+hidmap_load="YES"
 
 #===============================================================================
 # async i/o
@@ -812,7 +813,9 @@ syslogd_flags="-ss"
 hostname="castor"
 local_unbound_enable="NO"
 sshd_enable="NO"
-moused_enable="NO"
+moused_enable="YES"
+moused_port="/dev/wsp0"
+moused_type="auto"
 
 
 #=========================================================================#
@@ -851,7 +854,7 @@ economy_cx_lowest="Cmax"
 # kld list 
 #=========================================================================#
 
-kld_list="linux linux64 i915kms ext2fs mac_priority fusefs"
+kld_list="linux linux64 i915kms ext2fs mac_priority fusefs wsp hms hidmap"
 
 
 #=========================================================================#
@@ -1157,6 +1160,8 @@ hw.acpi.video.lcd0.brightness=100
 #=========================================================================#
 
 hw.usb.usbhid.enable=1
+kern.evdev.rcpt_mask=12
+hw.usb.wsp.enable_single_tap_clicks=1
 
 
 #=========================================================================#
