@@ -1321,14 +1321,14 @@ run_rc_command "$1"
 :ORDERED:  t
 :END:
 
-+ root dir
+****** root dir
 
 #+NAME: laggpf-root-dir
 #+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/rc.d/laggpf" :tangle-mode (identity #o755)
 <<laggpf>>
 #+END_SRC
   
-+ current dir
+****** current dir
 
 #+NAME: laggpf-current-dir
 #+BEGIN_SRC conf :tangle "usr/local/etc/rc.d/laggpf" :tangle-mode (identity #o755)
@@ -1388,14 +1388,14 @@ run_rc_command $1
 :ORDERED:  t
 :END:
 
-+ root dir
+****** root dir
 
 #+NAME: musicpd-root-dir
 #+BEGIN_SRC conf :tangle "/doas::/usr/local/etc/rc.d/musicpd" :tangle-mode (identity #o755)
 <<musicpd>>
 #+END_SRC
   
-+ current dir
+****** current dir
 
 #+NAME: musicpd-current-dir
 #+BEGIN_SRC conf :tangle "usr/local/etc/rc.d/musicpd" :tangle-mode (identity #o755)
