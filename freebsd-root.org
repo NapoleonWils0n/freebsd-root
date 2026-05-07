@@ -813,9 +813,7 @@ syslogd_flags="-ss"
 hostname="castor"
 local_unbound_enable="NO"
 sshd_enable="NO"
-moused_enable="YES"
-moused_port="/dev/wsp0"
-moused_type="auto"
+moused_enable="NO"
 
 
 #=========================================================================#
