@@ -79,7 +79,6 @@ coretemp_load="YES"
 
 wsp_load="YES"
 hms_load="YES"
-hidmap_load="YES"
 
 #===============================================================================
 # async i/o
@@ -852,7 +851,7 @@ economy_cx_lowest="Cmax"
 # kld list 
 #=========================================================================#
 
-kld_list="linux linux64 i915kms ext2fs mac_priority fusefs wsp hms hidmap"
+kld_list="linux linux64 i915kms ext2fs mac_priority fusefs"
 
 
 #=========================================================================#
@@ -1158,8 +1157,6 @@ hw.acpi.video.lcd0.brightness=100
 #=========================================================================#
 
 hw.usb.usbhid.enable=1
-kern.evdev.rcpt_mask=12
-hw.usb.wsp.enable_single_tap_clicks=1
 
 
 #=========================================================================#
@@ -1174,7 +1171,6 @@ net.add_addr_allfibs=0
 #=========================================================================#
 
 hw.acpi.lid_switch_state=s3
-
 #+END_SRC
 
 **** sysctl.conf tangle
